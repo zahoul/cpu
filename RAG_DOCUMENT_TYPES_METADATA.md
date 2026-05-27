@@ -239,7 +239,7 @@ test_metadata:
 ```
 Primary: cva6/verif/tests/testlist_*.yaml (30+ files)
 ISA Tests:
-├── testlist_riscv-tests-cv32a60x-p.yaml (14KB) - User-mode ISA tests
+├── testlist_riscv-tests-cv32a60x-p.yaml (14.3KB) - User-mode ISA tests
 ├── testlist_riscv-arch-test-cv64a6_imafdc_sv39.yaml (38KB) - Architecture tests
 ├── testlist_riscv-compliance-cv32a60x.yaml (30KB) - Compliance tests
 └── testlist_isacov.yaml (3KB) - ISA coverage tests
@@ -263,7 +263,7 @@ testlist:
 document_type: "test_configuration"
 extraction_metadata:
   file_path: "cva6/verif/tests/testlist_riscv-tests-cv32a60x-p.yaml"
-  file_size_kb: 14
+  file_size_kb: 14.3
   last_modified: "2024-05-25"
   
 architecture_metadata:
@@ -368,7 +368,7 @@ Signal Descriptions
 document_type: "interface_specification"
 extraction_metadata:
   file_path: "cva6/docs/01_cva6_user/AXI_Interface.rst"
-  file_size_kb: 12
+  file_size_kb: 23
   last_modified: "2024-05-25"
   
 architecture_metadata:
