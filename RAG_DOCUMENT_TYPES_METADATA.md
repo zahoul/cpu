@@ -15,6 +15,22 @@ Primary: cva6/verif/docs/VerifPlans/source/*.md
 └── dvplan_traps.md (23KB) - Exception/trap verification
 ```
 
+### Document Structure Example
+```markdown
+## Feature: RV32I Register-Immediate Instructions
+### Sub-feature: 000_ADDI
+#### Item: 000
+* **Requirement location:** ./RISCV_Instructions.rst
+* **Feature Description:** addi rd, rs1, imm[11:0]
+* **Verification Goals:** All possible rs1 registers are used
+* **Pass/Fail Criteria:** Check RM
+* **Test Type:** Constrained Random
+* **Coverage Method:** Functional Coverage
+* **Applicable Cores:** CV32A6_v0.1.0, CV32A6-step2
+* **Unique verification tag:** VP_ISA_RV32_F000_S000_I000
+* **Link to Coverage:** isacov.rv32i_addi_cg.cp_rs1
+```
+
 ### Metadata Structure
 ```yaml
 document_type: "verification_plan"
@@ -43,6 +59,7 @@ verification_metadata:
   coverage_method: "Functional Coverage"
   coverage_links: ["isacov.rv32i_addi_cg.cp_rs1"]
   requirement_location: "./RISCV_Instructions.rst"
+```
 
 ## Document Type 2: Design Implementation
 
@@ -60,6 +77,23 @@ Core modules:
 ├── issue_stage.sv (13KB) - Issue stage
 ├── commit_stage.sv (17KB) - Commit stage
 └── ex_stage.sv (27KB) - Execute stage
+```
+
+### Document Structure Example
+```systemverilog
+module alu
+  import ariane_pkg::*;
+#(
+  parameter int unsigned WIDTH = 32
+)(
+  input  logic                 clk_i,
+  input  logic                 rst_ni,
+  input  logic [WIDTH-1:0]     operand_a_i,
+  input  logic [WIDTH-1:0]     operand_b_i,
+  input  fu_op                 operator_i,
+  output logic [WIDTH-1:0]     result_o,
+  output logic                 comparison_result_o
+);
 ```
 
 ### Metadata Structure  
@@ -95,6 +129,7 @@ interface_metadata:
     - name: "WIDTH"
       default_value: 32
       type: "int unsigned"
+```
 
 ## Document Type 3: ISA Specifications
 
@@ -107,6 +142,25 @@ Unprivileged:
 ├── unpriv/m.adoc - Multiply/divide extension
 ├── unpriv/a.adoc - Atomic extension
 └── unpriv/zicsr.adoc - CSR instructions
+```
+
+### Document Structure Example
+```asciidoc
+==== ADDI
+
+ADDI adds the sign-extended 12-bit immediate to register rs1. 
+Arithmetic overflow is ignored and the result is simply the low XLEN bits.
+
+[wavedrom, ,svg]
+....
+{reg: [
+  {bits:  7, name: 'opcode', attr: '0010011'},
+  {bits:  5, name: 'rd'},
+  {bits:  3, name: 'funct3', attr: '000'},
+  {bits:  5, name: 'rs1'},
+  {bits: 12, name: 'imm[11:0]'}
+]}
+....
 ```
 
 ### Metadata Structure
@@ -135,6 +189,7 @@ operation_metadata:
   pseudocode: "x[rd] = x[rs1] + sext(imm)"
   exceptions: []
   constraints: ["Arithmetic overflow is ignored"]
+```
 
 ## Document Type 4: Test Examples
 
@@ -145,11 +200,26 @@ SystemVerilog Tests: cva6/verif/env/uvme_cva6/**/*.sv
 Referenced from Testlists: Tests specified in testlist_*.yaml files
 ```
 
+### Document Structure Example
+```assembly
+# CSR Access Test
+.section .text.init
+.globl _start
+_start:
+    li x1, 0x12345678          # Load immediate into x1
+    csrrw x2, mstatus, x1      # Read-write mstatus CSR
+    csrrs x3, mie, x1          # Read-set mie CSR
+    nop
+    j _end
+```
+
 ### Metadata Structure
 ```yaml
 document_type: "test_example"
 extraction_metadata:
   file_path: "cva6/verif/tests/custom/common/cva6_csr_access_test_32.S"
+  file_size_kb: 3
+  last_modified: "2024-05-25"
   language: "assembly"
   
 architecture_metadata:
@@ -161,6 +231,7 @@ test_metadata:
   test_type: "directed" 
   target_feature: "csr_access"
   referenced_by_testlists: ["testlist_custom.yaml"]   # Cross-reference
+```
 
 ## Document Type 5: Test Configurations (Testlists)
 
@@ -172,6 +243,19 @@ ISA Tests:
 ├── testlist_riscv-arch-test-cv64a6_imafdc_sv39.yaml (38KB) - Architecture tests
 ├── testlist_riscv-compliance-cv32a60x.yaml (30KB) - Compliance tests
 └── testlist_isacov.yaml (3KB) - ISA coverage tests
+```
+
+### Document Structure Example
+```yaml
+common_test_config: &common_test_config
+  path_var: TESTS_PATH
+  gcc_opts: "-static -mcmodel=medany -fvisibility=hidden"
+
+testlist:
+  - test: rv32ui-p-addi
+    iterations: 1
+    <<: *common_test_config
+    asm_tests: <path_var>/riscv-tests/isa/rv32ui/addi.S
 ```
 
 ### Metadata Structure
@@ -203,6 +287,7 @@ test_references:
     - test_file: "riscv-tests/isa/rv32ui/addi.S"
       test_name: "rv32ui-p-addi"
       iterations: 1
+```
 
 ## Document Type 6: Configuration Data
 
@@ -214,11 +299,26 @@ RISC-V Config: cva6/config/riscv-config/**/*.yaml
 └── cv64a6_imafdc_sv39/spec/isa_spec.yaml - CV64A6 ISA config
 ```
 
+### Document Structure Example
+```yaml
+hart_id: 0
+xlen: 32
+physical_addr_sz: 34
+supported_isa: ["rv32i", "rv32m", "rv32a", "rv32c", "rv32zicsr"]
+privilege_modes: ["M", "U"]
+custom_extensions: ["Xcorev"]
+mtvec:
+  rst_val: 0x00000000
+  mode: ["vectored", "direct"]
+```
+
 ### Metadata Structure
 ```yaml
 document_type: "configuration_data"
 extraction_metadata:
   file_path: "cva6/config/riscv-config/cv32a60x/spec/isa_spec.yaml"
+  file_size_kb: 5
+  last_modified: "2024-05-25"
   
 architecture_metadata:
   target_architecture: "RV32"                   # Extract from cv32 prefix
@@ -235,6 +335,7 @@ isa_metadata:
 memory_metadata:
   virtual_memory: false
   address_translation: null
+```
 
 ## Document Type 7: Interface Specifications
 
@@ -246,11 +347,29 @@ CVA6 Interfaces: cva6/docs/**/*.rst, cva6/**/*.md
 └── corev_apu/instr_tracing/README.md - Instruction tracing interface
 ```
 
+### Document Structure Example
+```rst
+AXI Interface
+=============
+
+The CVA6 core uses AXI4 interface for memory transactions.
+
+Signal Descriptions
+------------------
+
+* AWBURST[1:0]: Write burst type (always INCR = 2'b01)
+* ARBURST[1:0]: Read burst type (always INCR = 2'b01)
+* AWLEN[7:0]: Write burst length (0 or 1 for CVA6)
+* ARLEN[7:0]: Read burst length (0 or 1 for CVA6)
+```
+
 ### Metadata Structure
 ```yaml
 document_type: "interface_specification"
 extraction_metadata:
   file_path: "cva6/docs/01_cva6_user/AXI_Interface.rst"
+  file_size_kb: 12
+  last_modified: "2024-05-25"
   
 architecture_metadata:
   target_architecture: "RV32/RV64"              # Applicable to both
