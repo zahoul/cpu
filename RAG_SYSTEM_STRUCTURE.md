@@ -421,6 +421,13 @@ shared_documents:
       ISA_Test_Writer: "Learn gcc_opts, include paths, ISA test naming conventions"
       Interface_Test_Writer: "Learn interface-specific simulation options and protocol settings"  
       System_Test_Writer: "Learn UVM configuration, system parameters, hardware test setup"
+      
+  riscv_test_suite: # **NEW CRITICAL ADDITION**
+    used_by: ["ISA_Test_Writer"]
+    reason: "Provides actual reference test implementations for RISC-V instructions"
+    specific_usage:
+      ISA_Test_Writer: "Learn proven test patterns, edge cases, test macro usage, comprehensive instruction testing approaches"
+    cross_references: "Links testlist entries to actual test implementations"
     
   configuration_data:
     used_by: ["ISA_Test_Writer", "System_Test_Writer"] 
@@ -534,6 +541,14 @@ graph TD
 ### ISA Specifications
 - `riscv-isa-manual/src/unpriv/` - Unprivileged architecture specs
 - `riscv-isa-manual/src/priv/` - Privileged architecture specs
+
+### RISC-V Test Suite (Referenced by CVA6 Testlists) - **Critical Addition**
+- `riscv-tests/isa/rv32ui/*.S` - RV32 user-level integer tests (143 files)
+- `riscv-tests/isa/rv64ui/*.S` - RV64 user-level integer tests (143 files)
+- `riscv-tests/isa/rv32mi/*.S` - RV32 machine-level tests (22 files)
+- `riscv-tests/isa/rv64mi/*.S` - RV64 machine-level tests (24 files)
+- `riscv-tests/benchmarks/dhrystone/` - Performance benchmark tests
+- `riscv-tests/isa/macros/` - Shared test macros and infrastructure
 
 ## Implementation Recommendations
 

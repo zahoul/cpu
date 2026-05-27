@@ -386,3 +386,80 @@ signal_metadata:
   key_signals: ["AWVALID", "AWREADY", "AWBURST"]
   timing_constraints: ["setup", "hold"]
 ```
+
+## Document Type 8: RISC-V Test Suite (riscv-tests)
+
+### Source Locations
+```
+Primary: riscv-tests/isa/**/*.S, riscv-tests/benchmarks/**/*.c
+ISA Tests:
+├── isa/rv32ui/*.S - RV32 user-level integer tests (referenced by CVA6 testlists)
+├── isa/rv64ui/*.S - RV64 user-level integer tests  
+├── isa/rv32mi/*.S - RV32 machine-level integer tests
+├── isa/rv64mi/*.S - RV64 machine-level integer tests
+├── isa/rv32si/*.S - RV32 supervisor-level integer tests
+├── isa/macros/ - Test macro definitions
+└── env/ - Test environment headers
+
+Benchmarks:
+├── benchmarks/dhrystone/ - Dhrystone benchmark
+├── benchmarks/median/ - Median filter benchmark
+└── benchmarks/multiply/ - Multiplication benchmark
+```
+
+### Document Structure Example
+```assembly
+# See LICENSE for license details.
+
+#*****************************************************************************
+# addi.S
+#-----------------------------------------------------------------------------
+# Test addi instruction.
+
+#include "riscv_test.h"
+#include "test_macros.h"
+
+RVTEST_RV64U
+RVTEST_CODE_BEGIN
+
+  #-------------------------------------------------------------
+  # Arithmetic tests
+  #-------------------------------------------------------------
+
+  TEST_IMM_OP( 2,  addi, 0x00000000, 0x00000000, 0x000 );
+  TEST_IMM_OP( 3,  addi, 0x00000002, 0x00000001, 0x001 );
+```
+
+### Metadata Structure
+```yaml
+document_type: "riscv_test_suite"
+extraction_metadata:
+  file_path: "riscv-tests/isa/rv32ui/addi.S"
+  file_size_kb: 2
+  last_modified: "2024-05-27"
+  
+architecture_metadata:
+  target_architecture: "RV32"                   # Extract from rv32ui path
+  word_size: 32                                 # Extract from rv32 vs rv64
+  privilege_level: "user"                      # Extract from "ui" in rv32ui
+  test_vm: "rv32ui"                            # Extract from directory name
+  
+test_metadata:
+  test_name: "addi"                            # Extract from filename
+  instruction_under_test: "ADDI"               # Extract from filename/comments
+  test_type: "instruction_unit_test"          # Infer from structure
+  test_framework: "riscv_test_macros"         # Extract from includes
+  
+test_content_metadata:
+  test_cases_count: 16                         # Count TEST_IMM_OP calls
+  test_categories: ["arithmetic", "bypassing", "src_dest"] # Extract from comments
+  edge_cases_tested: ["overflow", "underflow", "zero"] # Infer from test values
+  macro_types_used: ["TEST_IMM_OP", "TEST_IMM_SRC1_EQ_DEST"] # Extract from code
+  
+cross_reference_metadata:
+  referenced_by_testlists: 
+    - "testlist_riscv-tests-cv32a60x-p.yaml"  # Cross-reference with CVA6 testlists
+    - "testlist_riscv-tests-cv64a6_imafdc_sv39.yaml"
+  cva6_test_name: "rv32ui-p-addi"             # How CVA6 references this test
+  shared_macros: ["riscv_test.h", "test_macros.h"] # Shared infrastructure
+```
