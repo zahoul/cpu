@@ -246,27 +246,32 @@ content:
      assign axi_req_o.ar.burst = axi_pkg::BURST_INCR;"     # → Agent knows: no need to test other burst types
 ```
 
-### 3. ISA Specifications → Guide Test Writing Agents on Correct Behavior
+### 3. ISA Specifications (RISC-V Official Manual) → Authoritative Instruction Behavior
 ```yaml
-document_type: isa_specification
-purpose: "Provides authoritative instruction behavior that test writing agents use to create correctness checks"
+document_type: isa_specification  
+purpose: "Official RISC-V manual providing authoritative instruction definitions for correctness verification"
 indexed_for: "Primarily ISA Test Writing Agent"
 
-# Example: ISA Test Writing Agent uses this to understand ADDI correctness
+# Example: ISA Test Writing Agent uses official RISC-V spec for ADDI
 metadata:
-  instruction: "ADDI"
-  extension: "RV32I"
-  instruction_format: "I-type"
+  specification_file: "riscv-isa-manual/src/unpriv/rv32.adoc"
+  chapter: "RV32I Base Integer Instruction Set"
+  instruction_category: "integer_register_immediate"
   supports_agent: "ISA_Test_Writer"
 content:
-  encoding: "imm[11:0] rs1[4:0] 000 rd[4:0] 0010011"        # → Agent decides: test this bit pattern
-  operation: "rd = rs1 + sign_extend(imm[11:0])"            # → Agent decides: create assertion for this
-  valid_ranges:
-    immediate: "[-2048, 2047]"                               # → Agent decides: constraint imm inside {[-2048:2047]}
-  constraints:
-    - "Arithmetic overflow is ignored"                       # → Agent decides: don't check overflow flag
-    - "x0 destination writes are ignored"                    # → Agent decides: special case for rd=x0
-  expected_result: "x[rd] = x[rs1] + sext(imm) if rd != 0"  # → Agent decides: assertion implementation
+  official_definition: "ADDI adds the sign-extended 12-bit immediate to register rs1"
+  register_model: "32 x registers each 32 bits wide, x0 hardwired to zero"
+  normative_requirements:
+    - "x0 hardwired with all bits equal to 0"              # → Agent decides: test x0 behavior
+    - "Arithmetic overflow ignored, result is low XLEN bits" # → Agent decides: no overflow checking
+  instruction_encoding: "I-type format with specific bit layout"
+  behavioral_specification: "Detailed operation semantics from official source"
+  
+# Cross-reference with riscv-tests implementation
+cross_reference:
+  official_spec: "ADDI definition in RISC-V manual"         # → Authoritative behavior
+  reference_implementation: "riscv-tests/isa/rv64ui/addi.S" # → Proven test patterns
+  cva6_verification: "dvplan_ISA_RV32.md ADDI requirements" # → CVA6-specific goals
 ```
 
 ### 4. Test Examples → Inform Test Writing Agents About Existing Patterns

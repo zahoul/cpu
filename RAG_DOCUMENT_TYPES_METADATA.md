@@ -131,36 +131,50 @@ interface_metadata:
       type: "int unsigned"
 ```
 
-## Document Type 3: ISA Specifications
+## Document Type 3: ISA Specifications (RISC-V Official Manual)
 
 ### Source Locations
 ```
-Primary: riscv-isa-manual/src/*.adoc
-Unprivileged:
-├── unpriv/rv32.adoc - RV32 base instruction set
-├── unpriv/rv64.adoc - RV64 base instruction set  
-├── unpriv/m.adoc - Multiply/divide extension
-├── unpriv/a.adoc - Atomic extension
-└── unpriv/zicsr.adoc - CSR instructions
+Primary: riscv-isa-manual/src/**/*.adoc
+Main specification:
+├── riscv-spec.adoc - Main specification document
+├── unpriv/base.adoc - Base instruction sets chapter
+├── unpriv/rv32.adoc - RV32I base integer instruction set
+├── unpriv/rv64.adoc - RV64I base integer instruction set
+├── unpriv/a-st-ext.adoc - Atomic instruction extension
+├── unpriv/m-st-ext.adoc - Multiply/divide extension  
+├── unpriv/c-st-ext.adoc - Compressed instruction extension
+├── unpriv/zicsr.adoc - CSR instruction extension
+└── unpriv/code-examples.adoc - Code examples
+
+Privileged specification:
+├── priv/priv.adoc - Main privileged architecture
+├── priv/machine.adoc - Machine-level architecture
+├── priv/supervisor.adoc - Supervisor-level architecture
+├── priv/csrs.adoc - Control and status registers
+└── priv/hypervisor.adoc - Hypervisor extension
 ```
 
 ### Document Structure Example
 ```asciidoc
-==== ADDI
+=== RV32I Base Integer Instruction Set
 
-ADDI adds the sign-extended 12-bit immediate to register rs1. 
-Arithmetic overflow is ignored and the result is simply the low XLEN bits.
+This section describes the RV32I base integer instruction set.
 
-[wavedrom, ,svg]
-....
-{reg: [
-  {bits:  7, name: 'opcode', attr: '0010011'},
-  {bits:  5, name: 'rd'},
-  {bits:  3, name: 'funct3', attr: '000'},
-  {bits:  5, name: 'rs1'},
-  {bits: 12, name: 'imm[11:0]'}
-]}
-....
+==== Programmers' Model for Base Integer ISA
+
+For RV32I, the 32 `x` registers are each 32 bits wide, i.e., XLEN=32.
+Register `x0` is hardwired with all bits equal to 0.
+General purpose registers `x1`–`x31` hold values that various
+instructions interpret as a collection of Boolean values, or as two's
+complement signed binary integers or unsigned binary integers.
+
+==== Integer Computational Instructions
+
+===== Integer Register-Immediate Instructions
+
+ADDI adds the sign-extended 12-bit immediate to register rs1.
+Arithmetic overflow is ignored and the result is simply the low XLEN bits of the result.
 ```
 
 ### Metadata Structure
@@ -168,27 +182,39 @@ Arithmetic overflow is ignored and the result is simply the low XLEN bits.
 document_type: "isa_specification"
 extraction_metadata:
   file_path: "riscv-isa-manual/src/unpriv/rv32.adoc"
-  file_size_kb: 45
+  file_size_kb: 15
   last_modified: "2024-05-26"
-  section_range: ["2.4", "2.4.1"]
+  chapter: "RV32I Base Integer Instruction Set"
   
 architecture_metadata:
-  target_architecture: "RV32"                    # Extract from filename rv32.adoc
-  word_size: 32                                  # Extract from RV32 vs RV64
-  extension_category: "base_integer"             # Extract from file context
+  target_architecture: "RV32"                    # Extract from RV32I context
+  word_size: 32                                  # Extract from "32 bits wide, XLEN=32"
+  extension_category: "base_integer"             # Extract from chapter title
+  instruction_count: 40                          # Extract from "contains 40 unique instructions"
   
-instruction_metadata:
-  instruction_name: "ADDI"
-  extension: "RV32I"
-  instruction_format: "I-type"
-  opcode: "0010011"
-  funct3: "000"
+specification_metadata:
+  specification_type: "official_risc_v_manual"   # This is the authoritative source
+  register_model: "32_general_purpose_registers" # Extract from programmers model
+  register_width: 32                             # Extract from XLEN=32
+  special_registers: ["x0_hardwired_zero", "pc"] # Extract from register descriptions
   
-operation_metadata:
-  operation_description: "ADDI adds the sign-extended 12-bit immediate to register rs1"
-  pseudocode: "x[rd] = x[rs1] + sext(imm)"
-  exceptions: []
-  constraints: ["Arithmetic overflow is ignored"]
+instruction_categories:
+  - category: "integer_register_immediate"       # Extract from section structure
+    instructions: ["ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI"]
+  - category: "integer_register_register"
+    instructions: ["ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND"]
+  - category: "load_store"
+    instructions: ["LB", "LH", "LW", "LBU", "LHU", "SB", "SH", "SW"]
+  - category: "control_flow"  
+    instructions: ["BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU", "JAL", "JALR"]
+    
+normative_requirements:
+  - requirement_id: "norm:rv32i_xreg_sz"
+    text: "For RV32I, the 32 x registers are each 32 bits wide"
+  - requirement_id: "norm:x0eq0"  
+    text: "Register x0 is hardwired with all bits equal to 0"
+  - requirement_id: "norm:pcreg_op"
+    text: "Program counter pc holds the address of the current instruction"
 ```
 
 ## Document Type 4: Test Examples
@@ -462,4 +488,176 @@ cross_reference_metadata:
     - "testlist_riscv-tests-cv64a6_imafdc_sv39.yaml"
   cva6_test_name: "rv32ui-p-addi"             # How CVA6 references this test
   shared_macros: ["riscv_test.h", "test_macros.h"] # Shared infrastructure
+```
+
+## Document Type 9: CVA6 Instruction Specifications
+
+### Source Locations
+```
+Primary: cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst
+├── cva6/docs/01_cva6_user/RISCV_Instructions_RV32I.rst
+├── cva6/config/gen_from_riscv_config/templates/isa_template.yaml
+└── cva6/config/gen_from_riscv_config/README.md (instruction details)
+```
+
+### Document Structure Example
+```rst
+- **ADDI**: Add Immediate
+
+    **Format**: addi rd, rs1, imm[11:0]
+
+    **Description**: add sign-extended 12-bit immediate to register rs1, and store the result in register rd.
+
+    **Pseudocode**: x[rd] = x[rs1] + sext(imm[11:0])
+
+    **Invalid values**: NONE
+
+    **Exception raised**: NONE
+```
+
+### Metadata Structure
+```yaml
+document_type: "cva6_instruction_specification"
+extraction_metadata:
+  file_path: "cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst"
+  file_size_kb: 25
+  last_modified: "2024-05-25"
+  
+architecture_metadata:
+  target_architecture: "RV32"                   # Extract from RV32I context
+  word_size: 32                                 # Extract from file context
+  specification_source: "CVA6_project"         # This is CVA6's instruction specification
+  
+instruction_metadata:
+  instruction_name: "ADDI"                      # Extract from "**ADDI**: Add Immediate"
+  instruction_category: "Integer Register-Immediate" # Extract from section header
+  format: "addi rd, rs1, imm[11:0]"           # Extract from "**Format**:"
+  description: "add sign-extended 12-bit immediate to register rs1" # Extract from "**Description**:"
+  pseudocode: "x[rd] = x[rs1] + sext(imm[11:0])" # Extract from "**Pseudocode**:"
+  invalid_values: "NONE"                       # Extract from "**Invalid values**:"
+  exceptions: "NONE"                           # Extract from "**Exception raised**:"
+  
+operand_metadata:
+  destination_register: "rd"                   # Extract from format
+  source_register: "rs1"                       # Extract from format
+  immediate_field: "imm[11:0]"                 # Extract from format
+  immediate_range: "[-2048, 2047]"            # Infer from 12-bit signed
+  immediate_encoding: "sign_extended"          # Extract from description
+  
+semantic_metadata:
+  operation_type: "arithmetic"                 # Infer from "Add"
+  side_effects: "none"                        # Infer from exceptions
+  register_dependencies: ["rs1", "rd"]        # Extract from pseudocode
+  supports_agents: ["ISA_Test_Writer"]        # Map to relevant agents
+```
+
+## Document Type 10: SystemVerilog Package Definitions
+
+### Source Locations
+```
+Primary: cva6/core/include/*.sv
+├── riscv_pkg.sv - RISC-V instruction opcodes and encodings
+├── ariane_pkg.sv - CVA6-specific types, constants, and parameters
+├── instr_tracer_pkg.sv - Instruction tracing definitions
+├── config_pkg.sv - Configuration package definitions
+├── cv32a60x_config_pkg.sv - CV32A60X specific configuration
+├── cv32a65x_config_pkg.sv - CV32A65X specific configuration  
+├── cv64a60ax_config_pkg.sv - CV64A60AX specific configuration
+├── build_config_pkg.sv - Build configuration definitions
+└── aes_pkg.sv - AES extension definitions
+```
+
+### Document Structure Example
+```systemverilog
+package riscv_pkg;
+  // RISC-V Opcodes
+  typedef enum logic [6:0] {
+    OpcodeOpImm     = 7'b0010011,  // Register-Immediate
+    OpcodeOp        = 7'b0110011,  // Register-Register  
+    OpcodeLoad      = 7'b0000011,  // Load instructions
+    OpcodeStore     = 7'b0100011,  // Store instructions
+    OpcodeBranch    = 7'b1100011,  // Branch instructions
+    OpcodeJal       = 7'b1101111,  // JAL instruction
+    OpcodeJalr      = 7'b1100111   // JALR instruction
+  } opcode_e;
+  
+  // Instruction formats
+  typedef struct packed {
+    logic [11:0] imm;
+    logic [4:0]  rs1; 
+    logic [2:0]  funct3;
+    logic [4:0]  rd;
+    logic [6:0]  opcode;
+  } itype_t;
+endpackage
+```
+
+### Metadata Structure
+```yaml
+document_type: "systemverilog_package"
+extraction_metadata:
+  file_path: "cva6/core/include/riscv_pkg.sv"
+  file_size_kb: 8
+  last_modified: "2024-05-25"
+  
+architecture_metadata:
+  target_architecture: "RV32/RV64"               # Package supports both
+  package_scope: "risc_v_definitions"           # Extract from package name
+  design_level: "implementation"                # This is implementation-specific
+  
+package_metadata:
+  package_name: "riscv_pkg"                     # Extract from "package riscv_pkg"
+  package_category: "instruction_definitions"   # Infer from content
+  import_dependencies: []                       # Extract from import statements
+  
+instruction_encoding_metadata:
+  opcode_definitions:
+    - name: "OpcodeOpImm"                       # Extract from typedef enum
+      value: "7'b0010011"                       # Extract binary value
+      decimal_value: 19                         # Convert for reference
+      description: "Register-Immediate instructions" # Extract from comments
+      instructions: ["ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI"]
+    - name: "OpcodeOp"
+      value: "7'b0110011"
+      decimal_value: 51
+      description: "Register-Register instructions"
+      instructions: ["ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND"]
+      
+  instruction_formats:
+    - format_name: "itype_t"                   # Extract from typedef struct
+      fields: 
+        - name: "imm"                          # Extract field definitions
+          width: 12
+          position: "[31:20]"
+        - name: "rs1"
+          width: 5 
+          position: "[19:15]"
+        - name: "funct3"
+          width: 3
+          position: "[14:12]"
+        - name: "rd" 
+          width: 5
+          position: "[11:7]"
+        - name: "opcode"
+          width: 7
+          position: "[6:0]"
+          
+  constant_definitions:
+    - name: "XLEN"                             # Extract parameter definitions
+      value: 32
+      description: "Register width"
+    - name: "NR_COMMIT_PORTS"
+      value: 2
+      description: "Number of commit ports"
+      
+semantic_metadata:
+  provides_instruction_encoding: true          # Critical for test generation
+  provides_opcode_values: true                # Enables bit-accurate tests
+  cva6_specific_constants: true               # Implementation-specific values
+  supports_agents: ["ISA_Test_Writer", "Interface_Test_Writer"] # Both need encodings
+  
+cross_reference_metadata:
+  links_to_instruction_specs: "Document Type 9" # Cross-ref to instruction behavior
+  used_by_design_modules: ["decoder.sv", "compressed_decoder.sv"] # Design usage
+  referenced_by_verification: "Verification plans use these opcodes"
 ```
