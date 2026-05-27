@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVA6 RAG System Structure & Data Organization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #e74c3c;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #5d6d7e;
+            margin-top: 25px;
+        }
+        .navigation {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .navigation h2 {
+            color: white;
+            border: none;
+            margin: 0 0 20px 0;
+            padding: 0;
+        }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .nav-section {
+            background: rgba(255,255,255,0.1);
+            padding: 18px;
+            border-radius: 6px;
+        }
+        .nav-section h4 {
+            margin: 0 0 12px 0;
+            color: #ecf0f1;
+            font-weight: 600;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .nav-links li {
+            margin: 6px 0;
+        }
+        .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #ecf0f1;
+            text-decoration: underline;
+        }
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            border-left: 4px solid #e74c3c;
+        }
+        code {
+            background-color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .highlight-box {
+            background: #fdf2f2;
+            border: 1px solid #e74c3c;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .agent-query-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .response-card {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .document-type {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, #e74c3c, transparent);
+            margin: 40px 0 20px 0;
+            border: none;
+        }
+        .file-list {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CVA6 RAG System Structure & Data Organization</h1>
+
+        <div class="navigation">
+            <h2>🗂️ Quick Navigation</h2>
+            <div class="nav-grid">
+                <div class="nav-section">
+                    <h4>🔍 RAG Query Interface</h4>
+                    <ul class="nav-links">
+                        <li><a href="#isa-queries">ISA Agent Queries</a></li>
+                        <li><a href="#interface-queries">Interface Agent Queries</a></li>
+                        <li><a href="#system-queries">System Agent Queries</a></li>
+                        <li><a href="#response-format">Response Format</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>📋 Document Types</h4>
+                    <ul class="nav-links">
+                        <li><a href="#verification-plans">Verification Plans</a></li>
+                        <li><a href="#design-implementation">Design Implementation</a></li>
+                        <li><a href="#isa-specifications">ISA Specifications</a></li>
+                        <li><a href="#test-examples">Test Examples</a></li>
+                        <li><a href="#test-configurations">Test Configurations</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>🏗️ Knowledge Base Structure</h4>
+                    <ul class="nav-links">
+                        <li><a href="#indexing-strategy">Indexing Strategy</a></li>
+                        <li><a href="#multi-dimensional">Multi-dimensional Indexing</a></li>
+                        <li><a href="#search-pipeline">Search Pipeline</a></li>
+                        <li><a href="#file-locations">Key File Locations</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>⚙️ Implementation</h4>
+                    <ul class="nav-links">
+                        <li><a href="#extraction-pipeline">Data Extraction</a></li>
+                        <li><a href="#query-optimization">Query Optimization</a></li>
+                        <li><a href="#cross-references">Cross-references</a></li>
+                        <li><a href="#recommendations">Recommendations</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <h2>Overview</h2>
+        <p>This document defines the RAG knowledge base structure that directly supports the CVA6 verification architecture. The RAG system provides indexed, searchable access to verification plans, design implementation, ISA specifications, and test patterns to enable the main test writing agents to make informed decisions.</p>
+
+        <h2 id="isa-queries">RAG Agent Query Interface (Supporting Main Test Writing Agents)</h2>
+        <p>The RAG agent receives queries from the three main test writing agents and returns relevant indexed content:</p>
+
+        <div class="agent-query-card">
+            <h3>A. From ISA Test Writing Agent</h3>
+            <pre><code># Query for ADDI instruction verification data
+rag_query:
+  query_text: "ADDI instruction verification goals coverage requirements register operands"
+  metadata_filters:
+    document_type: "verification_plan"
+    verification_tag: "VP_ISA_RV32_F000_S000_I000"
+    instruction: "ADDI"</code></pre>
+        </div>
+
+        <div class="agent-query-card">
+            <h3 id="interface-queries">B. From Interface Test Writing Agent</h3>
+            <pre><code># Query for AXI burst control verification
+rag_query:
+  query_text: "AXI burst type INCR AWBURST verification assertion requirements"
+  metadata_filters:
+    document_type: "verification_plan"
+    module: "AXI"
+    verification_tag: "VP_1_F005_S000_I000"</code></pre>
+        </div>
+
+        <div class="agent-query-card">
+            <h3 id="system-queries">C. From System Test Writing Agent</h3>
+            <pre><code># Query for MMU page table walk verification
+rag_query:
+  query_text: "MMU page table walk SV32 verification PTE validation exception"
+  metadata_filters:
+    document_type: "verification_plan"
+    module: "MMU_SV32"
+    feature: "page_table_walk"</code></pre>
+        </div>
+
+        <h2 id="response-format">RAG Response Format (What Main Test Writing Agents Receive)</h2>
+
+        <div class="response-card">
+            <h3>A. Response to ISA Test Writing Agent</h3>
+            <pre><code># RAG response for ADDI verification query
+rag_response:
+  documents_found: 3
+  total_relevance_score: 0.94
+  retrieved_content:
+    - document_id: "dvplan_ISA_RV32_addi_000"
+      source: "verif/docs/VerifPlans/source/dvplan_ISA_RV32.md"
+      content: |
+        "All possible rs1 registers are used.
+         All possible rd registers are used.
+         All possible register combinations where rs1 == rd are used"
+      metadata:
+        verification_tag: "VP_ISA_RV32_F000_S000_I000"
+        coverage_links: ["isacov.rv32i_addi_cg.cp_rs1", "isacov.rv32i_addi_cg.cp_rd"]
+        pass_criteria: "Check RM"</code></pre>
+        </div>
+
+        <h2 id="verification-plans">Indexed Document Types & Their Role in Test Generation</h2>
+
+        <div class="document-type">
+            <h3>1. Verification Plans → Enable Decision Making for All Test Writing Agents</h3>
+            <pre><code>document_type: verification_plan
+purpose: "Provides verification requirements that test writing agents translate into test strategies"
+indexed_for: "All 3 main test writing agents"
+
+# Example: ISA Test Writing Agent uses this
+metadata:
+  module: "ISA_RV32"
+  feature: "Register-Immediate Instructions"
+  sub_feature: "ADDI"
+  verification_tag: "VP_ISA_RV32_F000_S000_I000"
+  supports_agent: "ISA_Test_Writer"
+content:
+  verification_goals:
+    - "All possible rs1 registers are used"  # → Agent decides: constraint rs1 inside {[1:31]}
+    - "All possible rd registers are used"   # → Agent decides: constraint rd inside {[0:31]}
+  coverage_links:
+    - "isacov.rv32i_addi_cg.cp_rs1"         # → Agent decides: add to covergroup
+  test_type: "Constrained Random"            # → Agent decides: use randomization approach</code></pre>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <p><em>Continue to <a href="RAG_SYSTEM_STRUCTURE_PART2.html">Part 2: Complete Document Types & Implementation Details</a></em></p>
+        </div>
+    </div>
+</body>
+</html>

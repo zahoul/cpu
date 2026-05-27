@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Knowledge Base Folder Structure</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #27ae60;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #5d6d7e;
+            margin-top: 25px;
+        }
+        .navigation {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .navigation h2 {
+            color: white;
+            border: none;
+            margin: 0 0 20px 0;
+            padding: 0;
+        }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .nav-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .nav-section h4 {
+            margin: 0 0 10px 0;
+            color: #ecf0f1;
+            font-size: 14px;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .nav-links li {
+            margin: 4px 0;
+        }
+        .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #ecf0f1;
+            text-decoration: underline;
+        }
+        .folder-structure {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            border-left: 4px solid #27ae60;
+            margin: 15px 0;
+        }
+        .highlight-box {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .query-example {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        li {
+            margin: 6px 0;
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, #27ae60, transparent);
+            margin: 40px 0 20px 0;
+            border: none;
+        }
+        .file-type-badge {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .architecture-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAG Knowledge Base Folder Structure</h1>
+
+        <div class="navigation">
+            <h2>📁 Quick Navigation</h2>
+            <div class="nav-grid">
+                <div class="nav-section">
+                    <h4>📋 Document Types 1-5</h4>
+                    <ul class="nav-links">
+                        <li><a href="#verification-plans">1. Verification Plans</a></li>
+                        <li><a href="#testlists">2. Testlists</a></li>
+                        <li><a href="#reference-tests">3. Reference Tests</a></li>
+                        <li><a href="#instruction-specs">4. Instruction Specs</a></li>
+                        <li><a href="#system-descriptions">5. System Descriptions</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>🔧 Document Types 6-10</h4>
+                    <ul class="nav-links">
+                        <li><a href="#uvm-components">6. UVM Components</a></li>
+                        <li><a href="#interface-specs">7. Interface Specs</a></li>
+                        <li><a href="#isa-specifications">8. ISA Specifications</a></li>
+                        <li><a href="#test-infrastructure">9. Test Infrastructure</a></li>
+                        <li><a href="#systemverilog-packages">10. SystemVerilog Packages</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>🏗️ Structure Details</h4>
+                    <ul class="nav-links">
+                        <li><a href="#root-structure">Root Structure</a></li>
+                        <li><a href="#indexing-strategy">Indexing Strategy</a></li>
+                        <li><a href="#naming-convention">Naming Convention</a></li>
+                        <li><a href="#cross-references">Cross-References</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>🔍 Usage & Queries</h4>
+                    <ul class="nav-links">
+                        <li><a href="#query-examples">Query Examples</a></li>
+                        <li><a href="#metadata-storage">Metadata Storage</a></li>
+                        <li><a href="#storage-considerations">Storage Considerations</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <h2>Overview</h2>
+        <p>This document defines the folder structure for organizing indexed documents in the CVA6 RAG knowledge base. The structure is designed to support efficient querying by document type, architecture variant, and cross-repository relationships.</p>
+
+        <h2 id="root-structure">Root Structure</h2>
+        <div class="folder-structure">knowledge_base/
+├── verification_plans/           <span class="file-type-badge">Type 1</span>
+├── testlists/                   <span class="file-type-badge">Type 2</span>
+├── reference_tests/             <span class="file-type-badge">Type 3</span>
+├── instruction_specs/           <span class="file-type-badge">Type 4</span>
+├── system_descriptions/         <span class="file-type-badge">Type 5</span>
+├── uvm_components/              <span class="file-type-badge">Type 6</span>
+├── interface_specs/             <span class="file-type-badge">Type 7</span>
+├── isa_specifications/          <span class="file-type-badge">Type 8</span>
+├── test_infrastructure/         <span class="file-type-badge">Type 9</span>
+└── systemverilog_packages/      <span class="file-type-badge">Type 10</span></div>
+
+        <h2 id="verification-plans">1. verification_plans/</h2>
+        <div class="folder-structure">verification_plans/
+├── rv32/ <span class="architecture-badge">RV32</span>
+│   ├── isa/                     # ISA verification plans
+│   │   ├── dvplan_ISA_RV32.md
+│   │   ├── dvplan_ZICSR.md
+│   │   └── dvplan_exceptions.md
+│   ├── system/                  # System-level plans
+│   │   ├── dvplan_MMU.md
+│   │   └── dvplan_interrupts.md
+│   └── interface/               # Interface plans
+│       ├── dvplan_AXI.md
+│       └── dvplan_RVFI.md
+└── rv64/ <span class="architecture-badge">RV64</span>
+    ├── isa/
+    ├── system/
+    └── interface/</div>
+
+        <h2 id="testlists">2. testlists/</h2>
+        <div class="folder-structure">testlists/
+├── rv32/ <span class="architecture-badge">RV32</span>
+│   ├── isa/
+│   │   ├── RV32I_testlist.yaml
+│   │   ├── RV32M_testlist.yaml
+│   │   └── ZICSR_testlist.yaml
+│   ├── system/
+│   │   ├── MMU_testlist.yaml
+│   │   └── interrupt_testlist.yaml
+│   └── interface/
+│       ├── AXI_testlist.yaml
+│       └── RVFI_testlist.yaml
+└── rv64/ <span class="architecture-badge">RV64</span>
+    ├── isa/
+    ├── system/
+    └── interface/</div>
+
+        <h2 id="reference-tests">3. reference_tests/</h2>
+        <div class="folder-structure">reference_tests/
+├── rv32/ <span class="architecture-badge">RV32</span>
+│   ├── ui/                      # User-level integer tests
+│   │   ├── add.S
+│   │   ├── addi.S
+│   │   └── ...
+│   ├── uf/                      # User-level floating-point tests
+│   ├── si/                      # Supervisor-level integer tests
+│   └── mi/                      # Machine-level integer tests
+└── rv64/ <span class="architecture-badge">RV64</span>
+    ├── ui/
+    ├── uf/
+    ├── si/
+    └── mi/</div>
+
+        <h2 id="instruction-specs">4. instruction_specs/</h2>
+        <div class="folder-structure">instruction_specs/
+├── rv32/ <span class="architecture-badge">RV32</span>
+│   ├── base/
+│   │   ├── arithmetic/
+│   │   │   ├── ADD.rst
+│   │   │   ├── ADDI.rst
+│   │   │   └── ...
+│   │   ├── logical/
+│   │   │   ├── AND.rst
+│   │   │   ├── ANDI.rst
+│   │   │   └── ...
+│   │   ├── memory/
+│   │   │   ├── LW.rst
+│   │   │   ├── SW.rst
+│   │   │   └── ...
+│   │   └── control/
+│   │       ├── BEQ.rst
+│   │       ├── JAL.rst
+│   │       └── ...
+│   ├── extensions/
+│   │   ├── m_extension/         # Multiply/Divide
+│   │   ├── f_extension/         # Single-precision float
+│   │   ├── d_extension/         # Double-precision float
+│   │   └── c_extension/         # Compressed instructions
+│   └── privileged/
+│       ├── csr_instructions/
+│       ├── trap_instructions/
+│       └── virtual_memory/
+└── rv64/ <span class="architecture-badge">RV64</span>
+    ├── base/
+    ├── extensions/
+    └── privileged/</div>
+
+        <div style="margin-top: 30px;">
+            <p><em>Continue to <a href="RAG_KNOWLEDGE_BASE_STRUCTURE_PART2.html">Part 2: Complete Folder Structure & Implementation Details</a></em></p>
+        </div>
+    </div>
+</body>
+</html>

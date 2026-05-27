@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVA6 RAG Document Types & Metadata Structure</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #9b59b6;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #9b59b6;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #5d6d7e;
+            margin-top: 25px;
+        }
+        .navigation {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .navigation h2 {
+            color: white;
+            border: none;
+            margin: 0 0 20px 0;
+            padding: 0;
+        }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .nav-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .nav-section h4 {
+            margin: 0 0 10px 0;
+            color: #ecf0f1;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .nav-links li {
+            margin: 4px 0;
+        }
+        .nav-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 12px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #ecf0f1;
+            text-decoration: underline;
+        }
+        .document-type-card {
+            background: #f8f9fa;
+            border: 2px solid #9b59b6;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 4px 8px rgba(155, 89, 182, 0.1);
+        }
+        .document-type-card h2 {
+            background: #9b59b6;
+            color: white;
+            margin: -25px -25px 20px -25px;
+            padding: 15px 25px;
+            border-radius: 8px 8px 0 0;
+            border: none;
+        }
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            border-left: 4px solid #9b59b6;
+            margin: 15px 0;
+        }
+        .metadata-yaml {
+            background: #e8f4f8;
+            border: 1px solid #3498db;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .source-locations {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .file-size-badge {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .type-badge {
+            background: #9b59b6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        li {
+            margin: 6px 0;
+        }
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, #9b59b6, transparent);
+            margin: 40px 0 20px 0;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CVA6 RAG Document Types & Metadata Structure</h1>
+
+        <div class="navigation">
+            <h2>📚 Document Types Overview</h2>
+            <div class="nav-grid">
+                <div class="nav-section">
+                    <h4>Types 1-3</h4>
+                    <ul class="nav-links">
+                        <li><a href="#type1">1. Verification Plans</a></li>
+                        <li><a href="#type2">2. Design Implementation</a></li>
+                        <li><a href="#type3">3. ISA Specifications</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>Types 4-6</h4>
+                    <ul class="nav-links">
+                        <li><a href="#type4">4. Test Examples</a></li>
+                        <li><a href="#type5">5. Test Lists</a></li>
+                        <li><a href="#type6">6. System Descriptions</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>Types 7-9</h4>
+                    <ul class="nav-links">
+                        <li><a href="#type7">7. UVM Components</a></li>
+                        <li><a href="#type8">8. Interface Specifications</a></li>
+                        <li><a href="#type9">9. CVA6 Instruction Specifications</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h4>Type 10 & Metadata</h4>
+                    <ul class="nav-links">
+                        <li><a href="#type10">10. SystemVerilog Packages</a></li>
+                        <li><a href="#extraction">Metadata Extraction</a></li>
+                        <li><a href="#cross-refs">Cross-References</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="document-type-card" id="type1">
+            <h2><span class="type-badge">Type 1</span> Verification Plans</h2>
+
+            <h3>Source Locations</h3>
+            <div class="source-locations">Primary: cva6/verif/docs/VerifPlans/source/*.md
+├── dvplan_ISA_RV32.md<span class="file-size-badge">296KB</span> - RV32 instruction verification
+├── dvplan_AXI.md<span class="file-size-badge">18KB</span> - AXI interface verification
+├── dvplan_MMU_SV32.md<span class="file-size-badge">28KB</span> - MMU verification
+├── dvplan_PMP.md<span class="file-size-badge">771KB</span> - PMP verification
+├── dvplan_CVXIF.md<span class="file-size-badge">34KB</span> - CVXIF interface verification
+├── dvplan_FENCEI.md<span class="file-size-badge">20KB</span> - FENCE.I instruction verification
+├── dvplan_FRONTEND.md<span class="file-size-badge">11KB</span> - Frontend verification
+└── dvplan_traps.md<span class="file-size-badge">23KB</span> - Exception/trap verification</div>
+
+            <h3>Document Structure Example</h3>
+            <div class="code-block">## Feature: RV32I Register-Immediate Instructions
+### Sub-feature: 000_ADDI
+#### Item: 000
+* **Requirement location:** ./RISCV_Instructions.rst
+* **Feature Description:** addi rd, rs1, imm[11:0]
+* **Verification Goals:** All possible rs1 registers are used
+* **Pass/Fail Criteria:** Check RM
+* **Test Type:** Constrained Random
+* **Coverage Method:** Functional Coverage
+* **Applicable Cores:** CV32A6_v0.1.0, CV32A6-step2
+* **Unique verification tag:** VP_ISA_RV32_F000_S000_I000
+* **Link to Coverage:** isacov.rv32i_addi_cg.cp_rs1</div>
+
+            <h3>Metadata Structure</h3>
+            <div class="metadata-yaml">document_type: "verification_plan"
+extraction_metadata:
+  file_path: "cva6/verif/docs/VerifPlans/source/dvplan_ISA_RV32.md"
+  file_size_kb: 296
+  last_modified: "2024-05-25"
+  line_range: [5, 32]
+
+architecture_metadata:
+  target_architecture: "RV32"                     # Extract from filename "ISA_RV32"
+  word_size: 32                                   # Extract from RV32 vs RV64
+  applicable_cores: ["CV32A6_v0.1.0", "CV32A6-step2", "CV64A6-step3"]
+
+content_metadata:
+  verification_tag: "VP_ISA_RV32_F000_S000_I000"
+  module: "ISA_RV32"
+  feature: "Register-Immediate Instructions"
+  sub_feature: "ADDI"
+  item_id: "000"
+
+verification_metadata:
+  verification_goals: ["All possible rs1 registers are used"]
+  pass_fail_criteria: "Check RM"
+  test_type: "Constrained Random"
+  coverage_method: "Functional Coverage"
+  coverage_links: ["isacov.rv32i_addi_cg.cp_rs1"]
+  requirement_location: "./RISCV_Instructions.rst"</div>
+        </div>
+
+        <div class="document-type-card" id="type2">
+            <h2><span class="type-badge">Type 2</span> Design Implementation</h2>
+
+            <h3>Source Locations</h3>
+            <div class="source-locations">Primary: cva6/core/*.sv, cva6/corev_apu/*.sv
+Core modules:
+├── cva6.sv<span class="file-size-badge">75KB</span> - Top-level CVA6 module
+├── alu.sv<span class="file-size-badge">16KB</span> - Arithmetic Logic Unit
+├── decoder.sv<span class="file-size-badge">95KB</span> - Instruction decoder
+├── frontend/frontend.sv<span class="file-size-badge">24KB</span> - Instruction fetch
+├── cache_subsystem/*.sv - Cache implementation
+├── cva6_mmu/*.sv - Memory Management Unit
+├── load_store_unit.sv<span class="file-size-badge">33KB</span> - LSU implementation
+├── issue_stage.sv<span class="file-size-badge">13KB</span> - Issue stage
+├── commit_stage.sv<span class="file-size-badge">17KB</span> - Commit stage
+└── ex_stage.sv<span class="file-size-badge">27KB</span> - Execute stage</div>
+
+            <h3>Document Structure Example</h3>
+            <div class="code-block">module alu
+  import ariane_pkg::*;
+#(
+  parameter int unsigned WIDTH = 32
+)(
+  input  logic                 clk_i,
+  input  logic                 rst_ni,
+  input  logic [WIDTH-1:0]     operand_a_i,
+  input  logic [WIDTH-1:0]     operand_b_i,
+  input  fu_op                 operator_i,
+  output logic [WIDTH-1:0]     result_o,
+  output logic                 comparison_result_o
+);</div>
+
+            <h3>Metadata Structure</h3>
+            <div class="metadata-yaml">document_type: "design_implementation"
+extraction_metadata:
+  file_path: "cva6/core/alu.sv"
+  file_size_kb: 16
+  last_modified: "2024-05-25"
+  line_range: [18, 150]
+
+architecture_metadata:
+  target_architecture: "RV32/RV64"               # Extract from WIDTH parameter
+  data_width: 32                                 # Extract from WIDTH parameter
+  configurable_width: true                      # Detect from parameter usage
+
+module_metadata:
+  module_name: "alu"
+  category: "execution_unit"
+  hierarchy_level: "core"
+  dependencies: ["ariane_pkg"]
+
+interface_metadata:
+  input_ports:
+    - name: "operand_a_i"
+      width: 32
+      type: "logic"
+  output_ports:
+    - name: "result_o"
+      width: 32
+      type: "logic"
+  parameters:
+    - name: "WIDTH"
+      default_value: 32
+      type: "int unsigned"</div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <p><em>Continue to <a href="RAG_DOCUMENT_TYPES_PART2.html">Part 2: Complete Document Types 3-10 & Cross-References</a></em></p>
+        </div>
+    </div>
+</body>
+</html>
