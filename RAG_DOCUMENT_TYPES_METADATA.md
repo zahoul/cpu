@@ -289,7 +289,7 @@ name_type: "specification"                      # Fixed: "specification" for ISA
 target_architecture: "RV32"                     # Extract from filename: "rv32.adoc" → "RV32", or chapter title "RV32I" → "RV32"
 word_size: 32                                   # Extract from text: "32 bits wide" or "XLEN=32" → 32
 category: "specification"                       # Fixed: "specification" for all ISA specification documents
-subcategory: "base_integer"                     # Extract from chapter title: "Base Integer" → "base_integer"
+subcategory: "base_integer"                     # Extract from chapter title using mapping rules (see extraction patterns below)
 
 # Content-Specific Fields
 content_type: "specification"                   # Fixed: "specification" for authoritative ISA documents
@@ -312,6 +312,31 @@ instruction_categories: {                       # Extract from subsection headin
 # FROM: "Register `x0` is hardwired with all bits equal to 0"  →  special_registers: ["x0_hardwired_zero"]  
 # FROM: "===== Integer Register-Immediate Instructions"  →  instruction_categories: {"integer_register_immediate": [...]}
 # FROM: "riscv-isa-manual/src/unpriv/rv32.adoc"  →  target_architecture: "RV32"
+
+# Subcategory extraction mapping rules:
+# Chapter title patterns → subcategory mappings:
+# "Base Integer Instruction Set" → "base_integer"
+# "Integer Multiplication and Division" → "multiply_divide" 
+# "Atomic Instructions" → "atomic"
+# "Single-Precision Floating-Point" → "float_single"
+# "Double-Precision Floating-Point" → "float_double" 
+# "Compressed Instructions" → "compressed"
+# "Control and Status Register" → "csr"
+# "Machine-Level ISA" → "machine_level"
+# "Supervisor-Level ISA" → "supervisor_level"
+# "Hypervisor Extension" → "hypervisor"
+
+# File path patterns → subcategory mappings:
+# "unpriv/base.adoc" → "base_integer"
+# "unpriv/m-st-ext.adoc" → "multiply_divide"
+# "unpriv/a-st-ext.adoc" → "atomic" 
+# "unpriv/f-st-ext.adoc" → "float_single"
+# "unpriv/d-st-ext.adoc" → "float_double"
+# "unpriv/c-st-ext.adoc" → "compressed"
+# "unpriv/zicsr.adoc" → "csr"
+# "priv/machine.adoc" → "machine_level"
+# "priv/supervisor.adoc" → "supervisor_level"
+# "priv/hypervisor.adoc" → "hypervisor"
 ```
 
 ## Document Type 4: Test Examples
