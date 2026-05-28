@@ -2,6 +2,35 @@
 
 ## Document Type 1: Verification Plans
 
+### Purpose
+**What:** Structured verification requirements that define what needs to be tested and how
+**Why:** Provides the authoritative specification of verification goals that test writing agents must fulfill
+**When Used:** Primary input for all test generation - defines the "what to test" requirements
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Core Requirements (MUST SEND)
+verification_goals: ["All possible rs1 registers are used", "Overflow behavior tested"]
+test_approach: "constrained_random"  # or "directed", "assertion_based"
+pass_criteria: "Check RM"
+coverage_requirements: ["isacov.rv32i_addi_cg.cp_rs1", "isacov.rv32i_addi_cg.cp_rd"]
+
+# Context Information (SHOULD SEND)  
+feature_description: "addi rd, rs1, imm[11:0] - Add immediate instruction"
+verification_tag: "VP_ISA_RV32_F000_S000_I000"  # For traceability
+applicable_cores: ["CV32A6_v0.1.0", "CV32A6-step2"]
+requirement_references: ["./RISCV_Instructions.rst"]
+
+# Scope Boundaries (HELPFUL TO SEND)
+architecture_scope: "RV32"
+feature_category: "Register-Immediate Instructions" 
+item_priority: "mandatory"  # infer from plan structure
+```
+
+**Agent Decision Support:** This data enables agents to understand WHAT to test, HOW to approach testing, and WHEN the test passes/fails.
+
 ### Source Locations
 ```
 Primary: cva6/verif/docs/VerifPlans/source/*.md
@@ -62,6 +91,40 @@ verification_metadata:
 ```
 
 ## Document Type 2: Design Implementation
+
+### Purpose
+**What:** Actual CVA6 SystemVerilog implementation showing how features are built in hardware
+**Why:** Provides implementation-specific details that test agents need to create realistic, hardware-accurate tests
+**When Used:** When agents need to understand HOW CVA6 actually implements a feature (interfaces, timing, constraints)
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Hardware Interface Details (MUST SEND)
+module_interfaces:
+  inputs: [{"name": "operand_a_i", "width": 32, "type": "logic"}]
+  outputs: [{"name": "result_o", "width": 32, "type": "logic"}]  
+  parameters: [{"name": "WIDTH", "default": 32, "configurable": true}]
+
+# Implementation Constraints (MUST SEND)
+hardware_limitations:
+  data_width: 32  # or parameterizable
+  supported_operations: ["ADD", "SUB", "AND", "OR", "XOR"]  # extract from case statements
+  timing_characteristics: "combinatorial"  # or "pipelined", "multi-cycle"
+
+# Design Context (SHOULD SEND)
+module_hierarchy: "core.execution_unit.alu"
+dependencies: ["ariane_pkg", "riscv_pkg"]  # import statements
+design_category: "execution_unit"  # vs memory_unit, control_unit
+
+# Integration Points (HELPFUL TO SEND)
+connected_modules: ["issue_stage", "writeback_stage"]  # infer from port connections
+signal_protocols: "ready/valid handshaking"  # detect from signal patterns
+error_handling: ["overflow_flag", "invalid_op_exception"]  # extract from implementation
+```
+
+**Agent Decision Support:** This data helps agents understand implementation constraints, interface requirements, and realistic test scenarios based on actual hardware.
 
 ### Source Locations
 ```
@@ -132,6 +195,42 @@ interface_metadata:
 ```
 
 ## Document Type 3: ISA Specifications (RISC-V Official Manual)
+
+### Purpose
+**What:** Official RISC-V architecture specification defining authoritative instruction behavior
+**Why:** Provides the "golden reference" for correct instruction semantics that test agents use for expected behavior
+**When Used:** When agents need authoritative instruction definitions, architectural rules, and normative requirements
+
+### RAG Agent Data Extraction  
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Normative Behavior (MUST SEND)
+instruction_semantics:
+  operation: "ADDI adds sign-extended 12-bit immediate to register rs1"
+  operand_constraints: {"rs1": "any_register", "rd": "any_register", "imm": "12_bit_signed"}
+  architectural_effects: "updates_rd_register_only"
+  side_effects: "none"
+
+# Register Model Rules (MUST SEND)
+register_behavior:
+  x0_constraint: "hardwired_to_zero"  # x0 always reads 0, writes ignored
+  register_width: 32  # XLEN for this architecture
+  register_count: 32
+  special_registers: ["x0_zero", "pc_program_counter"]
+
+# Instruction Encoding (SHOULD SEND)
+encoding_format: "I-type"
+bit_layout: {"imm": "[31:20]", "rs1": "[19:15]", "funct3": "[14:12]", "rd": "[11:7]", "opcode": "[6:0]"}
+opcode_value: "0010011"
+
+# Architectural Context (HELPFUL TO SEND)
+extension_category: "base_integer"
+privilege_requirements: "any_level"  # user, supervisor, machine
+exception_conditions: "none"  # or specific conditions that trigger exceptions
+```
+
+**Agent Decision Support:** This data provides the authoritative "correct behavior" that generated tests must verify against.
 
 ### Source Locations
 ```
@@ -219,6 +318,43 @@ normative_requirements:
 
 ## Document Type 4: Test Examples
 
+### Purpose  
+**What:** Existing test implementations showing proven patterns and approaches
+**Why:** Provides concrete examples of test structure, constraints, and implementation techniques for agent reference
+**When Used:** When agents need to learn from existing test patterns or avoid duplicating existing coverage
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Test Pattern Examples (MUST SEND)
+test_structure:
+  test_approach: "directed"  # vs constrained_random, assertion_based
+  instruction_sequences: ["li x1, 0x12345678", "csrrw x2, mstatus, x1", "csrrs x3, mie, x1"]
+  validation_method: "compare_against_expected"
+  result_checking: "branch_on_mismatch"
+
+# Constraint Patterns (MUST SEND)  
+constraint_examples:
+  register_usage: {"avoid": ["x0"], "preferred": ["x1", "x2", "x3"], "temporary": ["x30", "x31"]}
+  value_patterns: ["0xa5a5a5a5", "0x5a5a5a5a", "0x00000000", "0xffffffff"]
+  edge_cases: ["boundary_values", "overflow_conditions", "zero_operands"]
+
+# Test Infrastructure (SHOULD SEND)
+framework_usage:
+  includes: ["model_test.h", "riscv_test.h"]
+  macros_used: ["TEST_IMM_OP", "RVTEST_CODE_BEGIN", "RVTEST_CODE_END"]
+  result_communication: "tohost_protocol"
+  exception_handling: "mtvec_setup_pattern"
+
+# Coverage Insights (HELPFUL TO SEND)
+coverage_achieved: ["rs1_register_coverage", "immediate_value_coverage"]
+test_limitations: ["only_positive_values", "single_instruction_focus"]
+related_tests: ["similar_csr_tests", "related_instruction_tests"]
+```
+
+**Agent Decision Support:** This data helps agents learn proven test patterns and avoid reinventing test infrastructure.
+
 ### Source Locations
 ```
 Assembly Tests: cva6/verif/tests/custom/**/*.S
@@ -260,6 +396,46 @@ test_metadata:
 ```
 
 ## Document Type 5: Test Configurations (Testlists)
+
+### Purpose
+**What:** Test execution configuration defining how tests are compiled, run, and integrated into test suites  
+**Why:** Provides the infrastructure knowledge agents need to generate properly configured, executable tests
+**When Used:** When agents need to understand test compilation, execution environment, and integration requirements
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Compilation Configuration (MUST SEND)
+build_settings:
+  gcc_options: "-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles"
+  include_paths: ["/riscv-tests/isa/macros/scalar/", "/cva6/verif/tests/custom/common/"]
+  target_architecture: "rv32"  # affects compiler flags
+  privilege_mode: "machine"  # affects memory layout
+
+# Test Organization (MUST SEND)
+test_suite_structure:
+  test_category: "isa_tests"  # vs custom_tests, compliance_tests
+  execution_count: 1  # iterations per test
+  test_naming_convention: "rv32ui-p-addi"  # pattern for generated tests
+  file_organization: "separate_file_per_instruction"
+
+# Infrastructure Requirements (SHOULD SEND)
+execution_environment:
+  simulator_options: "+signature=signature.log +timeout=10000"
+  memory_model: "physical_addressing"  # vs virtual_addressing
+  core_configuration: "cv32a60x"
+  required_extensions: ["rv32i", "rv32m", "rv32c"]
+
+# Integration Points (HELPFUL TO SEND)
+test_framework_integration:
+  result_collection: "signature_comparison"
+  timeout_handling: "10000_cycles"
+  parallel_execution: "supported"
+  regression_integration: "nightly_suite"
+```
+
+**Agent Decision Support:** This data ensures generated tests are properly configured for the target execution environment and test infrastructure.
 
 ### Source Locations
 ```
@@ -317,6 +493,45 @@ test_references:
 
 ## Document Type 6: Configuration Data
 
+### Purpose
+**What:** CVA6 core configuration parameters defining enabled features, extensions, and system parameters
+**Why:** Provides agents with knowledge of what features are actually enabled in the target core configuration  
+**When Used:** When agents need to generate tests that match the specific CVA6 configuration being verified
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Core Configuration (MUST SEND)
+enabled_features:
+  base_isa: "rv32i"
+  extensions: ["M", "A", "C", "Zicsr", "Zifencei"]  # only test enabled extensions
+  custom_extensions: ["Xcorev"]  # CVA6-specific extensions
+  privilege_levels: ["M", "U"]  # no supervisor mode in this config
+
+# System Parameters (MUST SEND)
+system_configuration:
+  xlen: 32  # register width affects test data sizes
+  physical_addr_size: 34  # memory addressing limits
+  virtual_memory: false  # affects memory test patterns
+  cache_configuration: {"icache": "16KB", "dcache": "16KB"}
+
+# Hardware Constraints (SHOULD SEND)
+implementation_limits:
+  register_file_size: 32
+  csr_implemented: ["mstatus", "mie", "mtvec", "mepc", "mcause"]  # only test implemented CSRs
+  exception_support: ["illegal_instruction", "ecall", "ebreak"]
+  interrupt_support: ["machine_timer", "machine_external"]
+
+# Configuration Context (HELPFUL TO SEND)
+core_variant: "cv32a60x"  # affects expected behavior
+configuration_purpose: "embedded_application"  # vs high_performance, area_optimized
+compliance_target: "riscv_2019_12_31"  # specification version
+verification_scope: "instruction_accurate"  # vs cycle_accurate
+```
+
+**Agent Decision Support:** This data ensures agents only generate tests for actually implemented features and use correct system parameters.
+
 ### Source Locations
 ```
 RISC-V Config: cva6/config/riscv-config/**/*.yaml
@@ -364,6 +579,46 @@ memory_metadata:
 ```
 
 ## Document Type 7: Interface Specifications
+
+### Purpose  
+**What:** Interface protocol specifications defining signal behavior, timing, and compliance requirements
+**Why:** Provides agents with knowledge of interface constraints and protocol rules for generating interface tests
+**When Used:** When agents need to generate interface compliance tests, protocol violation tests, or integration tests
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Protocol Requirements (MUST SEND)
+interface_constraints:
+  protocol_name: "AXI4"
+  signal_behaviors: {"AWBURST": "always_INCR", "AWLEN": "0_or_1_only"}
+  timing_requirements: {"setup_time": "1ns", "hold_time": "0.5ns"}
+  mandatory_sequences: ["AWVALID_before_AWREADY", "WLAST_with_final_data"]
+
+# Signal Definitions (MUST SEND)
+signal_specifications:
+  control_signals: ["AWVALID", "AWREADY", "WVALID", "WREADY", "BVALID", "BREADY"]
+  data_signals: ["AWADDR[63:0]", "WDATA[63:0]", "BRESP[1:0]"]
+  width_constraints: {"address": 64, "data": 64, "id": 4}
+  encoding_rules: {"BRESP": {"OKAY": "2'b00", "EXOKAY": "2'b01"}}
+
+# Compliance Rules (SHOULD SEND)
+protocol_compliance:
+  cvx6_specific_constraints: ["burst_type_always_INCR", "no_wrap_bursts"]
+  violation_conditions: ["AWVALID_low_with_AWREADY_high", "missing_WLAST"]
+  error_responses: {"decode_error": "SLVERR", "timeout": "SLVERR"}  
+  performance_requirements: {"max_latency": "100_cycles", "min_throughput": "1GB_s"}
+
+# Integration Context (HELPFUL TO SEND)
+system_integration:
+  connected_components: ["cache_controller", "memory_subsystem"]
+  interface_direction: "master"  # CVA6 is AXI master
+  multiplexing: "single_outstanding_transaction"
+  error_handling_strategy: "exception_on_error_response"
+```
+
+**Agent Decision Support:** This data enables agents to generate tests that verify protocol compliance and detect interface violations.
 
 ### Source Locations  
 ```
@@ -414,6 +669,46 @@ signal_metadata:
 ```
 
 ## Document Type 8: RISC-V Test Suite (riscv-tests)
+
+### Purpose
+**What:** Reference implementation of RISC-V instruction tests providing proven test patterns and comprehensive coverage
+**Why:** Provides agents with battle-tested test approaches, edge cases, and comprehensive instruction coverage patterns
+**When Used:** When agents need proven test patterns, comprehensive edge case coverage, or reference implementations
+
+### RAG Agent Data Extraction  
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Proven Test Patterns (MUST SEND)
+test_methodology:
+  instruction_coverage: ["basic_operation", "edge_cases", "register_combinations"]
+  test_case_patterns: ["TEST_IMM_OP(2, addi, 0x00000000, 0x00000000, 0x000)"]
+  validation_approach: "golden_result_comparison"
+  edge_case_strategy: "boundary_values_plus_random"
+
+# Comprehensive Test Cases (MUST SEND)  
+coverage_examples:
+  test_cases_count: 16  # for ADDI instruction
+  edge_cases_covered: ["min_immediate", "max_immediate", "zero_operands", "register_hazards"]
+  register_combinations: ["rs1_x0_special_case", "rd_equals_rs1_hazard", "all_register_coverage"]
+  data_patterns: ["0x00000000", "0x7fffffff", "0x80000000", "0xffffffff"]
+
+# Test Infrastructure Patterns (SHOULD SEND)
+framework_integration:
+  macro_library: ["TEST_IMM_OP", "TEST_RR_OP", "TEST_PASSFAIL", "RVTEST_CODE_BEGIN"]
+  exception_handling: "standard_trap_handler"
+  result_validation: "signature_based_checking"  
+  test_environment: "baremetal_rv32ui"
+
+# Quality Assurance (HELPFUL TO SEND) 
+test_quality_metrics:
+  coverage_completeness: "architectural_compliance_verified"
+  cross_platform_validation: "multiple_implementation_tested"
+  regression_stability: "stable_across_risc_v_versions"
+  community_validation: "open_source_peer_reviewed"
+```
+
+**Agent Decision Support:** This data provides agents with proven, comprehensive test patterns and quality benchmarks for instruction testing.
 
 ### Source Locations
 ```
@@ -492,6 +787,46 @@ cross_reference_metadata:
 
 ## Document Type 9: CVA6 Instruction Specifications
 
+### Purpose
+**What:** CVA6-specific instruction definitions with implementation details and exceptions
+**Why:** Provides agents with CVA6-specific instruction behavior that may differ from generic RISC-V specification  
+**When Used:** When agents need CVA6-specific instruction behavior, implementation constraints, or exception handling
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# CVA6-Specific Behavior (MUST SEND)
+implementation_specifics:
+  instruction_format: "addi rd, rs1, imm[11:0]"
+  operation_description: "add sign-extended 12-bit immediate to register rs1"  
+  pseudocode: "x[rd] = x[rs1] + sext(imm[11:0])"
+  cva6_specific_constraints: "no_overflow_exception"  # vs other implementations
+
+# Exception Behavior (MUST SEND)
+exception_handling:
+  normal_exceptions: "NONE"  # or specific exceptions this instruction can raise
+  invalid_conditions: "NONE"  # or conditions that make instruction invalid
+  privilege_requirements: "any_level"  # or specific privilege level needed
+  side_effects: "updates_rd_only"  # what else the instruction affects
+
+# Implementation Details (SHOULD SEND)  
+cva6_implementation_notes:
+  execution_timing: "single_cycle"  # vs multi_cycle, pipelined
+  resource_usage: ["alu_port", "register_file_write"]
+  hazard_considerations: ["rd_rs1_bypass_required"]
+  performance_characteristics: "combinatorial_alu_operation"
+
+# Cross-Reference Context (HELPFUL TO SEND)
+specification_context:
+  differs_from_risc_v_spec: false  # or list differences
+  related_instructions: ["ADD", "SUB", "other_immediate_ops"]
+  verification_priority: "high"  # based on usage frequency
+  test_complexity: "low"  # implementation complexity affects test strategy
+```
+
+**Agent Decision Support:** This data ensures agents generate tests that match CVA6's specific implementation rather than generic RISC-V behavior.
+
 ### Source Locations
 ```
 Primary: cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst
@@ -552,6 +887,46 @@ semantic_metadata:
 ```
 
 ## Document Type 10: SystemVerilog Package Definitions
+
+### Purpose
+**What:** SystemVerilog package definitions containing instruction encodings, opcodes, and hardware constants  
+**Why:** Provides agents with exact bit-level encodings and hardware constants needed for accurate test generation
+**When Used:** When agents need precise instruction encodings, CSR addresses, exception codes, or hardware constants
+
+### RAG Agent Data Extraction  
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Instruction Encoding Constants (MUST SEND)
+encoding_definitions:
+  opcode_values: {"OpcodeOpImm": "7'b0010011", "OpcodeOp": "7'b0110011"}  
+  instruction_formats: {"itype_t": {"imm": "[31:20]", "rs1": "[19:15]", "rd": "[11:7]"}}
+  funct_codes: {"ADDI": {"funct3": "3'b000", "opcode": "OpcodeOpImm"}}
+  bit_patterns: "32'b_iiiiiiiiiiii_sssss_000_ddddd_0010011"  # for ADDI
+
+# Hardware Constants (MUST SEND)  
+system_constants:
+  csr_addresses: {"CSR_MSTATUS": "12'h300", "CSR_MARCHID": "12'hF12"}
+  exception_codes: {"ILLEGAL_INSTR": "2", "ECALL_M_MODE": "11"}
+  register_definitions: {"XLEN": 32, "REG_ADDR_SIZE": 5}
+  privilege_encodings: {"PRIV_LVL_M": "2'b11", "PRIV_LVL_U": "2'b00"}
+
+# Type Definitions (SHOULD SEND)
+data_structures:
+  instruction_types: ["rtype_t", "itype_t", "stype_t", "utype_t"]
+  csr_structure_definitions: "mstatus_rv_t with specific bit fields"
+  exception_structure: "cause codes and priority encoding"
+  interface_types: "axi request/response structures"  
+
+# Implementation Constants (HELPFUL TO SEND)
+configuration_parameters:
+  default_values: {"WIDTH": 32, "NR_COMMIT_PORTS": 1}
+  compile_time_options: "parameterizable vs fixed configurations"
+  package_dependencies: ["cva6_config_pkg", "ariane_pkg"]  
+  version_specific_constants: "implementation version differences"
+```
+
+**Agent Decision Support:** This data provides agents with exact bit-level specifications needed for generating hardware-accurate tests and proper instruction encoding.
 
 ### Source Locations
 ```
