@@ -62,32 +62,34 @@ Primary: cva6/verif/docs/VerifPlans/source/*.md
 
 ### Metadata Structure
 ```yaml
-document_type: "verification_plan"
-extraction_metadata:
-  file_path: "cva6/verif/docs/VerifPlans/source/dvplan_ISA_RV32.md"
-  file_size_kb: 296
-  last_modified: "2024-05-25"
-  line_range: [5, 32]
-  
-architecture_metadata:
-  target_architecture: "RV32"                     # Extract from filename "ISA_RV32"
-  word_size: 32                                   # Extract from RV32 vs RV64
-  applicable_cores: ["CV32A6_v0.1.0", "CV32A6-step2", "CV64A6-step3"]
-  
-content_metadata:
-  verification_tag: "VP_ISA_RV32_F000_S000_I000"
-  module: "ISA_RV32"
-  feature: "Register-Immediate Instructions"
-  sub_feature: "ADDI"
-  item_id: "000"
-  
-verification_metadata:
-  verification_goals: ["All possible rs1 registers are used"]
-  pass_fail_criteria: "Check RM"
-  test_type: "Constrained Random"
-  coverage_method: "Functional Coverage"
-  coverage_links: ["isacov.rv32i_addi_cg.cp_rs1"]
-  requirement_location: "./RISCV_Instructions.rst"
+# Universal Fields (harmonized schema)
+document_type: "verification_plan"                # Fixed value for this document type
+file_path: "cva6/verif/docs/VerifPlans/source/dvplan_ISA_RV32.md"  # Full repository path
+name: "ISA_RV32"                                  # Extract from filename before first underscore: "dvplan_ISA_RV32.md" → "ISA_RV32"
+name_type: "module"                               # Fixed: "module" for verification plans
+target_architecture: "RV32"                      # Extract from filename: "ISA_RV32" → "RV32", "ISA_RV64" → "RV64"  
+word_size: 32                                     # Derive from architecture: RV32→32, RV64→64
+category: "verification"                          # Fixed: "verification" for all verification plans
+subcategory: "isa"                                # Map filename: ISA_RV32→"isa", AXI→"interface", MMU→"system", PMP→"security"
+
+# Content-Specific Fields
+feature: "Register-Immediate Instructions"         # Extract from "## Feature:" line content
+sub_feature: "ADDI"                               # Extract from "### Sub-feature:" after underscore: "000_ADDI" → "ADDI"
+content_type: "constrained_random"                # Map from "Test Type": "Constrained Random"→"constrained_random", "Directed"→"directed"
+source_type: "project_internal"                   # Fixed: "project_internal" for CVA6 verification plans
+target_cores: ["CV32A6_v0.1.0", "CV32A6-step2"]  # Extract from "* **Applicable Cores:**" line, split by comma
+
+# Document-Specific Fields
+verification_tag: "VP_ISA_RV32_F000_S000_I000"   # Extract from "* **Unique verification tag:**" line
+verification_goals: ["All possible rs1 registers are used", "All possible rd registers are used"]  # Extract from "* **Verification Goals**" section, one per bullet
+pass_fail_criteria: "Check RM"                   # Extract from "* **Pass/Fail Criteria:**" line content
+coverage_links: ["isacov.rv32i_addi_cg.cp_rs1", "isacov.rv32i_addi_cg.cp_rd"]  # Extract from "* **Link to Coverage:**" line, split by whitespace
+requirement_location: "./RISCV_Instructions.rst" # Extract from "* **Requirement location:**" line content
+
+# Examples of extraction patterns:
+# FROM: "### Sub-feature: 000_ADDI"  →  sub_feature: "ADDI"  
+# FROM: "* **Test Type:** Constrained Random"  →  content_type: "constrained_random"
+# FROM: "* **Applicable Cores:** CV32A6_v0.1.0, CV32A6-step2"  →  target_cores: ["CV32A6_v0.1.0", "CV32A6-step2"]
 ```
 
 ## Document Type 2: Design Implementation
@@ -161,37 +163,38 @@ module alu
 
 ### Metadata Structure  
 ```yaml
-document_type: "design_implementation"
-extraction_metadata:
-  file_path: "cva6/core/alu.sv"
-  file_size_kb: 16
-  last_modified: "2024-05-25"
-  line_range: [18, 150]
-  
-architecture_metadata:
-  target_architecture: "RV32/RV64"               # Extract from WIDTH parameter
-  data_width: 32                                 # Extract from WIDTH parameter
-  configurable_width: true                      # Detect from parameter usage
-  
-module_metadata:
-  module_name: "alu"
-  category: "execution_unit"
-  hierarchy_level: "core"
-  dependencies: ["ariane_pkg"]
-  
-interface_metadata:
-  input_ports: 
-    - name: "operand_a_i"
-      width: 32
-      type: "logic"
-  output_ports:
-    - name: "result_o"
-      width: 32
-      type: "logic"
-  parameters:
-    - name: "WIDTH"
-      default_value: 32
-      type: "int unsigned"
+# Universal Fields (harmonized schema)
+document_type: "design_implementation"            # Fixed value for this document type
+file_path: "cva6/core/alu.sv"                    # Full repository path
+name: "alu"                                       # Extract from module declaration: "module alu" → "alu"
+name_type: "module"                               # Fixed: "module" for SystemVerilog modules
+target_architecture: "RV32/RV64"                 # Detect from parameterization: WIDTH parameter → "RV32/RV64", fixed 32 → "RV32"
+word_size: 32                                     # Extract from WIDTH parameter default: "parameter int unsigned WIDTH = 32" → 32
+category: "hardware"                              # Fixed: "hardware" for all design implementation files
+subcategory: "execution_unit"                    # Map from path: "core/" → "execution_unit", "cache_subsystem/" → "memory", "frontend/" → "fetch"
+
+# Content-Specific Fields  
+dependencies: ["ariane_pkg", "riscv_pkg"]        # Extract from import statements: "import ariane_pkg::*;" → ["ariane_pkg"]
+
+# Document-Specific Fields
+input_ports: [                                   # Parse module port list for input declarations
+  {"name": "operand_a_i", "width": 32, "type": "logic"},  # FROM: "input logic [WIDTH-1:0] operand_a_i"
+  {"name": "operand_b_i", "width": 32, "type": "logic"},  # FROM: "input logic [WIDTH-1:0] operand_b_i"  
+  {"name": "operator_i", "width": 6, "type": "fu_op"}     # FROM: "input fu_op operator_i"
+]
+output_ports: [                                  # Parse module port list for output declarations
+  {"name": "result_o", "width": 32, "type": "logic"},           # FROM: "output logic [WIDTH-1:0] result_o"
+  {"name": "comparison_result_o", "width": 1, "type": "logic"}  # FROM: "output logic comparison_result_o"
+]
+parameters: [                                    # Extract parameter declarations
+  {"name": "WIDTH", "default_value": 32, "type": "int unsigned"}  # FROM: "parameter int unsigned WIDTH = 32"
+]
+
+# Examples of extraction patterns:
+# FROM: "module alu import ariane_pkg::*;"  →  name: "alu", dependencies: ["ariane_pkg"]
+# FROM: "input logic [WIDTH-1:0] operand_a_i,"  →  {"name": "operand_a_i", "width": "WIDTH", "type": "logic"}
+# FROM: "cva6/core/alu.sv"  →  subcategory: "execution_unit" (core/ maps to execution_unit)
+# FROM: "cva6/cache_subsystem/wt_cache.sv"  →  subcategory: "memory" (cache_subsystem/ maps to memory)
 ```
 
 ## Document Type 3: ISA Specifications (RISC-V Official Manual)
@@ -278,42 +281,37 @@ Arithmetic overflow is ignored and the result is simply the low XLEN bits of the
 
 ### Metadata Structure
 ```yaml
-document_type: "isa_specification"
-extraction_metadata:
-  file_path: "riscv-isa-manual/src/unpriv/rv32.adoc"
-  file_size_kb: 15
-  last_modified: "2024-05-26"
-  chapter: "RV32I Base Integer Instruction Set"
-  
-architecture_metadata:
-  target_architecture: "RV32"                    # Extract from RV32I context
-  word_size: 32                                  # Extract from "32 bits wide, XLEN=32"
-  extension_category: "base_integer"             # Extract from chapter title
-  instruction_count: 40                          # Extract from "contains 40 unique instructions"
-  
-specification_metadata:
-  specification_type: "official_risc_v_manual"   # This is the authoritative source
-  register_model: "32_general_purpose_registers" # Extract from programmers model
-  register_width: 32                             # Extract from XLEN=32
-  special_registers: ["x0_hardwired_zero", "pc"] # Extract from register descriptions
-  
-instruction_categories:
-  - category: "integer_register_immediate"       # Extract from section structure
-    instructions: ["ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI"]
-  - category: "integer_register_register"
-    instructions: ["ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND"]
-  - category: "load_store"
-    instructions: ["LB", "LH", "LW", "LBU", "LHU", "SB", "SH", "SW"]
-  - category: "control_flow"  
-    instructions: ["BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU", "JAL", "JALR"]
-    
-normative_requirements:
-  - requirement_id: "norm:rv32i_xreg_sz"
-    text: "For RV32I, the 32 x registers are each 32 bits wide"
-  - requirement_id: "norm:x0eq0"  
-    text: "Register x0 is hardwired with all bits equal to 0"
-  - requirement_id: "norm:pcreg_op"
-    text: "Program counter pc holds the address of the current instruction"
+# Universal Fields (harmonized schema)
+document_type: "isa_specification"               # Fixed value for this document type
+file_path: "riscv-isa-manual/src/unpriv/rv32.adoc"  # Full repository path
+name: "RV32I Base Integer Instruction Set"      # Extract from main chapter heading: "=== RV32I Base Integer Instruction Set"
+name_type: "specification"                      # Fixed: "specification" for ISA manual chapters
+target_architecture: "RV32"                     # Extract from filename: "rv32.adoc" → "RV32", or chapter title "RV32I" → "RV32"
+word_size: 32                                   # Extract from text: "32 bits wide" or "XLEN=32" → 32
+category: "specification"                       # Fixed: "specification" for all ISA specification documents
+subcategory: "base_integer"                     # Extract from chapter title: "Base Integer" → "base_integer"
+
+# Content-Specific Fields
+content_type: "specification"                   # Fixed: "specification" for authoritative ISA documents
+source_type: "official"                         # Fixed: "official" for RISC-V ISA manual
+
+# Document-Specific Fields  
+chapter: "RV32I Base Integer Instruction Set"   # Extract from main section heading
+register_model: "32_general_purpose_registers"  # Extract from text: "the 32 `x` registers" → "32_general_purpose_registers"
+special_registers: ["x0_hardwired_zero", "pc"]  # Extract from text: "Register `x0` is hardwired" → ["x0_hardwired_zero"]
+instruction_categories: {                       # Extract from subsection headings
+  "integer_register_immediate": ["ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI"],  # FROM: "===== Integer Register-Immediate Instructions"
+  "integer_register_register": ["ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA"],  # FROM: "===== Integer Register-Register Operations"  
+  "load_store": ["LB", "LH", "LW", "LBU", "LHU", "SB", "SH", "SW"],  # FROM: "===== Load and Store Instructions"
+  "control_flow": ["BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU", "JAL", "JALR"]  # FROM: "===== Control Transfer Instructions"
+}
+
+# Examples of extraction patterns:
+# FROM: "=== RV32I Base Integer Instruction Set"  →  name: "RV32I Base Integer Instruction Set"
+# FROM: "For RV32I, the 32 `x` registers are each 32 bits wide"  →  register_model: "32_general_purpose_registers", word_size: 32
+# FROM: "Register `x0` is hardwired with all bits equal to 0"  →  special_registers: ["x0_hardwired_zero"]  
+# FROM: "===== Integer Register-Immediate Instructions"  →  instruction_categories: {"integer_register_immediate": [...]}
+# FROM: "riscv-isa-manual/src/unpriv/rv32.adoc"  →  target_architecture: "RV32"
 ```
 
 ## Document Type 4: Test Examples
@@ -377,22 +375,33 @@ _start:
 
 ### Metadata Structure
 ```yaml
-document_type: "test_example"
-extraction_metadata:
-  file_path: "cva6/verif/tests/custom/common/cva6_csr_access_test_32.S"
-  file_size_kb: 3
-  last_modified: "2024-05-25"
-  language: "assembly"
-  
-architecture_metadata:
-  target_architecture: "RV32"                   # Extract from filename "_32" suffix
-  word_size: 32                                 # Extract from filename pattern
-  
-test_metadata:
-  test_name: "cva6_csr_access_test_32"
-  test_type: "directed" 
-  target_feature: "csr_access"
-  referenced_by_testlists: ["testlist_custom.yaml"]   # Cross-reference
+# Universal Fields (harmonized schema)
+document_type: "test_example"                    # Fixed value for this document type
+file_path: "cva6/verif/tests/custom/CSR/csr_access_failing_tests/riscv_marchid_csr_test_0.S"  # Full repository path
+name: "riscv_marchid_csr_test_0"                # Extract from filename without extension: "riscv_marchid_csr_test_0.S" → "riscv_marchid_csr_test_0"
+name_type: "test"                               # Fixed: "test" for test example files
+target_architecture: "RV32"                     # Extract from filename suffix: "_32" → "RV32", or detect from code: "li x1, 0x12345678" (32-bit) → "RV32"
+word_size: 32                                   # Derive from architecture: RV32 → 32, RV64 → 64
+category: "test"                                # Fixed: "test" for all test example files
+subcategory: "csr_access"                       # Extract from path: "CSR/" → "csr_access", "ALU/" → "alu", "Memory/" → "memory"
+
+# Content-Specific Fields
+feature: "MARCHID CSR"                          # Extract from filename: "marchid" → "MARCHID CSR", or from comments
+content_type: "directed"                        # Infer from structure: specific sequence → "directed", randomized → "constrained_random"
+test_framework: "model_test"                    # Extract from #include: "#include \"model_test.h\"" → "model_test"
+
+# Document-Specific Fields
+language: "assembly"                            # Detect from file extension: ".S" → "assembly", ".sv" → "systemverilog"
+instructions_used: ["li", "csrr", "csrrw", "csrrs", "csrrc", "bne", "j"]  # Parse assembly to extract instruction mnemonics
+test_pattern: "csr_read_write_validation"       # Infer from instruction patterns: CSR ops + validation → "csr_read_write_validation"
+validation_method: "expected_value_comparison"  # Extract from code pattern: "bne x31, x6, csr_fail" → "expected_value_comparison"
+
+# Examples of extraction patterns:
+# FROM: "cva6/verif/tests/custom/CSR/csr_access_failing_tests/riscv_marchid_csr_test_0.S"  →  subcategory: "csr_access" (CSR/ path)
+# FROM: "#include \"model_test.h\""  →  test_framework: "model_test"
+# FROM: "csrr x31, 3858" + "li x6, 0x00000003" + "bne x31, x6, csr_fail"  →  validation_method: "expected_value_comparison"
+# FROM: "li x1, 0x12345678" (32-bit immediate)  →  target_architecture: "RV32"
+# FROM: Multiple CSR instructions (csrr, csrrw, csrrs, csrrc)  →  test_pattern: "csr_read_write_validation"
 ```
 
 ## Document Type 5: Test Configurations (Testlists)
@@ -462,33 +471,34 @@ testlist:
 
 ### Metadata Structure
 ```yaml
-document_type: "test_configuration"
-extraction_metadata:
-  file_path: "cva6/verif/tests/testlist_riscv-tests-cv32a60x-p.yaml"
-  file_size_kb: 14.3
-  last_modified: "2024-05-25"
-  
-architecture_metadata:
-  target_architecture: "RV32"                   # Extract from "cv32a60x" in filename
-  word_size: 32                                 # Extract from cv32 prefix
-  target_core: "cv32a60x"                      # Extract from filename
-  privilege_mode: "machine"                    # Extract from "-p" suffix
-  
-testlist_metadata:
-  testlist_name: "riscv-tests-cv32a60x-p"
-  test_category: "isa_tests"
-  test_count: 45
-  
-configuration_metadata:
-  gcc_opts: "-static -mcmodel=medany"
-  include_paths: ["/riscv-tests/isa/macros/scalar/"]
-  link_options: ["-nostdlib", "-nostartfiles"]
-  
-test_references:
-  referenced_tests: 
-    - test_file: "riscv-tests/isa/rv32ui/addi.S"
-      test_name: "rv32ui-p-addi"
-      iterations: 1
+# Universal Fields (harmonized schema)
+document_type: "test_configuration"             # Fixed value for this document type  
+file_path: "cva6/verif/tests/testlist_riscv-tests-cv32a60x-p.yaml"  # Full repository path
+name: "riscv-tests-cv32a60x-p"                  # Extract from filename after "testlist_": "testlist_riscv-tests-cv32a60x-p.yaml" → "riscv-tests-cv32a60x-p"
+name_type: "testlist"                           # Fixed: "testlist" for test configuration files
+target_architecture: "RV32"                     # Extract from core name: "cv32a60x" → "RV32", "cv64a6" → "RV64"
+word_size: 32                                   # Derive from architecture: RV32 → 32, RV64 → 64  
+category: "configuration"                       # Fixed: "configuration" for all test configuration files
+subcategory: "isa_tests"                        # Map from filename: "riscv-tests" → "isa_tests", "custom" → "directed_tests", "compliance" → "compliance_tests"
+
+# Content-Specific Fields
+privilege_level: "machine"                      # Extract from suffix: "-p" → "machine", "-s" → "supervisor", "-u" → "user"
+target_cores: ["cv32a60x"]                      # Extract from filename: "cv32a60x" → ["cv32a60x"], "cv64a6" → ["cv64a6"]
+test_framework: "riscv_tests"                   # Extract from filename: "riscv-tests" → "riscv_tests", "custom" → "custom_framework"
+
+# Document-Specific Fields
+gcc_opts: "-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles"  # Extract from YAML "gcc_opts:" field
+include_paths: ["/riscv-tests/isa/macros/scalar/"]  # Extract from YAML include path specifications or path_var usage
+test_references: [                              # Parse YAML testlist entries
+  {"test": "rv32ui-p-addi", "iterations": 1, "asm_tests": "<path_var>/riscv-tests/isa/rv32ui/addi.S"},  # FROM: "- test: rv32ui-p-addi"
+  {"test": "rv32ui-p-add", "iterations": 1, "asm_tests": "<path_var>/riscv-tests/isa/rv32ui/add.S"}    # FROM: "- test: rv32ui-p-add"  
+]
+
+# Examples of extraction patterns:
+# FROM: "testlist_riscv-tests-cv32a60x-p.yaml"  →  name: "riscv-tests-cv32a60x-p", subcategory: "isa_tests", target_cores: ["cv32a60x"], privilege_level: "machine"
+# FROM: "gcc_opts: \"-static -mcmodel=medany\""  →  gcc_opts: "-static -mcmodel=medany"
+# FROM: "- test: rv32ui-p-addi\n  iterations: 1\n  asm_tests: <path_var>/riscv-tests/isa/rv32ui/addi.S"  →  test_references entry
+# FROM: "cv32a60x" in filename  →  target_architecture: "RV32", word_size: 32
 ```
 
 ## Document Type 6: Configuration Data
@@ -555,27 +565,31 @@ mtvec:
 
 ### Metadata Structure
 ```yaml
-document_type: "configuration_data"
-extraction_metadata:
-  file_path: "cva6/config/riscv-config/cv32a60x/spec/isa_spec.yaml"
-  file_size_kb: 5
-  last_modified: "2024-05-25"
-  
-architecture_metadata:
-  target_architecture: "RV32"                   # Extract from cv32 prefix
-  word_size: 32                                 # Extract from xlen field
-  core_name: "cv32a60x"                         # Extract from path
-  physical_addr_sz: 34                          # Extract directly
-  
-isa_metadata:
-  base_isa: "rv32i"
-  extensions: ["M", "A", "C", "Zicsr"]
-  custom_extensions: ["Xcorev"]
-  privilege_modes: ["M", "U"]
-  
-memory_metadata:
-  virtual_memory: false
-  address_translation: null
+# Universal Fields (harmonized schema)
+document_type: "configuration_data"             # Fixed value for this document type
+file_path: "cva6/config/riscv-config/cv32a60x/spec/isa_spec.yaml"  # Full repository path  
+name: "cv32a60x"                                # Extract from path directory: ".../cv32a60x/spec/..." → "cv32a60x"
+name_type: "core_config"                        # Fixed: "core_config" for configuration data files
+target_architecture: "RV32"                     # Extract from core name: "cv32a60x" → "RV32", "cv64a6" → "RV64"
+word_size: 32                                   # Extract from YAML "xlen: 32" field
+category: "configuration"                       # Fixed: "configuration" for all configuration data files  
+subcategory: "isa_specification"                # Map from filename: "isa_spec.yaml" → "isa_specification", "debug_spec.yaml" → "debug_specification"
+
+# Content-Specific Fields
+target_cores: ["cv32a60x"]                      # Extract core name from path: ".../cv32a60x/..." → ["cv32a60x"]
+
+# Document-Specific Fields  
+physical_addr_sz: 34                            # Extract from YAML "physical_addr_sz: 34" field
+supported_isa: ["rv32i", "rv32m", "rv32a", "rv32c", "rv32zicsr"]  # Extract from YAML "supported_isa:" array
+custom_extensions: ["Xcorev"]                   # Extract from YAML "custom_extensions:" array  
+privilege_levels: ["M", "U"]                    # Extract from YAML "privilege_modes: [\"M\", \"U\"]" field
+mtvec_mode: ["vectored", "direct"]              # Extract from YAML "mtvec: mode: [\"vectored\", \"direct\"]"
+
+# Examples of extraction patterns:
+# FROM: "cva6/config/riscv-config/cv32a60x/spec/isa_spec.yaml"  →  name: "cv32a60x", target_architecture: "RV32"
+# FROM: "xlen: 32"  →  word_size: 32
+# FROM: "supported_isa: [\"rv32i\", \"rv32m\", \"rv32a\"]"  →  supported_isa: ["rv32i", "rv32m", "rv32a"]
+# FROM: "privilege_modes: [\"M\", \"U\"]"  →  privilege_levels: ["M", "U"]
 ```
 
 ## Document Type 7: Interface Specifications
@@ -646,26 +660,37 @@ Signal Descriptions
 
 ### Metadata Structure
 ```yaml
-document_type: "interface_specification"
-extraction_metadata:
-  file_path: "cva6/docs/01_cva6_user/AXI_Interface.rst"
-  file_size_kb: 23
-  last_modified: "2024-05-25"
-  
-architecture_metadata:
-  target_architecture: "RV32/RV64"              # Applicable to both
-  interface_width: 64                           # Extract from spec
-  
-interface_metadata:
-  interface_name: "AXI4"
-  protocol_version: "4.0"
-  interface_type: "memory_bus"
-  direction: "master"
-  
-signal_metadata:
-  signal_groups: ["address", "data", "control"]
-  key_signals: ["AWVALID", "AWREADY", "AWBURST"]
-  timing_constraints: ["setup", "hold"]
+# Universal Fields (harmonized schema) 
+document_type: "interface_specification"        # Fixed value for this document type
+file_path: "cva6/docs/01_cva6_user/AXI_Interface.rst"  # Full repository path
+name: "AXI4"                                    # Extract from document title: "AXI Interface" → "AXI4", or detect from text "AXI4 interface"
+name_type: "interface"                          # Fixed: "interface" for interface specification files
+target_architecture: "RV32/RV64"                # Extract from document scope: usually "RV32/RV64" for system interfaces  
+word_size: 64                                   # Extract from interface width: "64-bit AXI interface" → 64
+category: "specification"                       # Fixed: "specification" for all interface specification files
+subcategory: "memory_bus"                       # Map from interface type: AXI → "memory_bus", RVFI → "trace", CVXIF → "coprocessor"
+
+# Content-Specific Fields
+source_type: "project_internal"                 # Fixed: "project_internal" for CVA6 interface specifications
+
+# Document-Specific Fields
+protocol_version: "4.0"                         # Extract from text: "AXI4 interface" → "4.0"
+interface_type: "memory_bus"                    # Infer from context: AXI → "memory_bus", debug → "debug_interface"  
+direction: "master"                              # Extract from text: "CVA6 core uses AXI4 interface" → "master" (CVA6 is master)
+key_signals: ["AWVALID", "AWREADY", "AWBURST", "ARBURST", "AWLEN", "ARLEN"]  # Extract from "Signal Descriptions" sections
+signal_constraints: {                           # Extract from signal description text
+  "AWBURST": "always INCR = 2'b01",            # FROM: "AWBURST[1:0]: Write burst type (always INCR = 2'b01)"
+  "ARBURST": "always INCR = 2'b01",            # FROM: "ARBURST[1:0]: Read burst type (always INCR = 2'b01)"
+  "AWLEN": "0 or 1 for CVA6",                  # FROM: "AWLEN[7:0]: Write burst length (0 or 1 for CVA6)"
+  "ARLEN": "0 or 1 for CVA6"                   # FROM: "ARLEN[7:0]: Read burst length (0 or 1 for CVA6)"
+}
+timing_constraints: ["setup", "hold"]           # Extract from timing requirement sections
+
+# Examples of extraction patterns:
+# FROM: "AXI Interface" title + "AXI4" in text  →  name: "AXI4"  
+# FROM: "AWBURST[1:0]: Write burst type (always INCR = 2'b01)"  →  signal_constraints: {"AWBURST": "always INCR = 2'b01"}
+# FROM: "The CVA6 core uses AXI4 interface"  →  direction: "master"
+# FROM: "cva6/docs/01_cva6_user/AXI_Interface.rst"  →  subcategory: "memory_bus" (AXI maps to memory_bus)
 ```
 
 ## Document Type 8: RISC-V Test Suite (riscv-tests)
@@ -753,36 +778,34 @@ RVTEST_CODE_BEGIN
 
 ### Metadata Structure
 ```yaml
-document_type: "riscv_test_suite"
-extraction_metadata:
-  file_path: "riscv-tests/isa/rv32ui/addi.S"
-  file_size_kb: 2
-  last_modified: "2024-05-27"
-  
-architecture_metadata:
-  target_architecture: "RV32"                   # Extract from rv32ui path
-  word_size: 32                                 # Extract from rv32 vs rv64
-  privilege_level: "user"                      # Extract from "ui" in rv32ui
-  test_vm: "rv32ui"                            # Extract from directory name
-  
-test_metadata:
-  test_name: "addi"                            # Extract from filename
-  instruction_under_test: "ADDI"               # Extract from filename/comments
-  test_type: "instruction_unit_test"          # Infer from structure
-  test_framework: "riscv_test_macros"         # Extract from includes
-  
-test_content_metadata:
-  test_cases_count: 16                         # Count TEST_IMM_OP calls
-  test_categories: ["arithmetic", "bypassing", "src_dest"] # Extract from comments
-  edge_cases_tested: ["overflow", "underflow", "zero"] # Infer from test values
-  macro_types_used: ["TEST_IMM_OP", "TEST_IMM_SRC1_EQ_DEST"] # Extract from code
-  
-cross_reference_metadata:
-  referenced_by_testlists: 
-    - "testlist_riscv-tests-cv32a60x-p.yaml"  # Cross-reference with CVA6 testlists
-    - "testlist_riscv-tests-cv64a6_imafdc_sv39.yaml"
-  cva6_test_name: "rv32ui-p-addi"             # How CVA6 references this test
-  shared_macros: ["riscv_test.h", "test_macros.h"] # Shared infrastructure
+# Universal Fields (harmonized schema)
+document_type: "riscv_test_suite"               # Fixed value for this document type
+file_path: "riscv-tests/isa/rv32ui/addi.S"     # Full repository path
+name: "addi"                                    # Extract from filename without extension: "addi.S" → "addi"
+name_type: "instruction_test"                  # Fixed: "instruction_test" for riscv-tests files
+target_architecture: "RV32"                    # Extract from path: "rv32ui/" → "RV32", "rv64ui/" → "RV64"
+word_size: 32                                  # Derive from architecture: RV32 → 32, RV64 → 64
+category: "reference_test"                     # Fixed: "reference_test" for all riscv-tests files
+subcategory: "instruction_unit"                # Map from path: "ui/" → "instruction_unit", "mi/" → "machine_level", "si/" → "supervisor_level"
+
+# Content-Specific Fields
+privilege_level: "user"                        # Extract from path: "ui" → "user", "mi" → "machine", "si" → "supervisor"
+content_type: "reference"                      # Fixed: "reference" for official riscv-tests
+source_type: "official"                        # Fixed: "official" for riscv-tests suite
+test_framework: "riscv_test_macros"            # Extract from includes: "#include \"riscv_test.h\"" → "riscv_test_macros"
+
+# Document-Specific Fields
+test_vm: "rv32ui"                              # Extract from directory path: "rv32ui/" → "rv32ui"
+instruction_under_test: "ADDI"                 # Extract from filename: "addi" → "ADDI", or from comments "# Test addi instruction"
+test_cases_count: 16                           # Count macro invocations: count "TEST_IMM_OP(" occurrences
+macro_types_used: ["TEST_IMM_OP", "TEST_IMM_SRC1_EQ_DEST", "TEST_IMM_DEST_BYPASS"]  # Extract unique macro names from code
+test_pattern_categories: ["arithmetic_tests", "bypassing_tests", "source_destination_tests"]  # Extract from comment sections
+
+# Examples of extraction patterns:
+# FROM: "riscv-tests/isa/rv32ui/addi.S"  →  target_architecture: "RV32", privilege_level: "user", name: "addi"
+# FROM: "#include \"riscv_test.h\""  →  test_framework: "riscv_test_macros"
+# FROM: "TEST_IMM_OP( 2, addi, 0x00000000, 0x00000000, 0x000 );"  →  macro_types_used includes "TEST_IMM_OP"
+# FROM: "# Test addi instruction."  →  instruction_under_test: "ADDI"
 ```
 
 ## Document Type 9: CVA6 Instruction Specifications
@@ -852,38 +875,39 @@ Primary: cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst
 
 ### Metadata Structure
 ```yaml
-document_type: "cva6_instruction_specification"
-extraction_metadata:
-  file_path: "cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst"
-  file_size_kb: 25
-  last_modified: "2024-05-25"
-  
-architecture_metadata:
-  target_architecture: "RV32"                   # Extract from RV32I context
-  word_size: 32                                 # Extract from file context
-  specification_source: "CVA6_project"         # This is CVA6's instruction specification
-  
-instruction_metadata:
-  instruction_name: "ADDI"                      # Extract from "**ADDI**: Add Immediate"
-  instruction_category: "Integer Register-Immediate" # Extract from section header
-  format: "addi rd, rs1, imm[11:0]"           # Extract from "**Format**:"
-  description: "add sign-extended 12-bit immediate to register rs1" # Extract from "**Description**:"
-  pseudocode: "x[rd] = x[rs1] + sext(imm[11:0])" # Extract from "**Pseudocode**:"
-  invalid_values: "NONE"                       # Extract from "**Invalid values**:"
-  exceptions: "NONE"                           # Extract from "**Exception raised**:"
-  
-operand_metadata:
-  destination_register: "rd"                   # Extract from format
-  source_register: "rs1"                       # Extract from format
-  immediate_field: "imm[11:0]"                 # Extract from format
-  immediate_range: "[-2048, 2047]"            # Infer from 12-bit signed
-  immediate_encoding: "sign_extended"          # Extract from description
-  
-semantic_metadata:
-  operation_type: "arithmetic"                 # Infer from "Add"
-  side_effects: "none"                        # Infer from exceptions
-  register_dependencies: ["rs1", "rd"]        # Extract from pseudocode
-  supports_agents: ["ISA_Test_Writer"]        # Map to relevant agents
+# Universal Fields (harmonized schema)
+document_type: "cva6_instruction_specification" # Fixed value for this document type
+file_path: "cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst"  # Full repository path
+name: "ADDI"                                    # Extract from instruction definition: "- **ADDI**: Add Immediate" → "ADDI"
+name_type: "instruction"                       # Fixed: "instruction" for instruction specification files
+target_architecture: "RV32"                    # Extract from file path: "ISA_RV32/" → "RV32"
+word_size: 32                                  # Derive from architecture: RV32 → 32, RV64 → 64
+category: "specification"                      # Fixed: "specification" for all instruction specification files
+subcategory: "cva6_internal"                   # Fixed: "cva6_internal" for CVA6 project specifications
+
+# Content-Specific Fields  
+feature: "Integer Register-Immediate"           # Extract from section header above instruction definitions
+content_type: "specification"                  # Fixed: "specification" for instruction definitions
+source_type: "project_internal"                # Fixed: "project_internal" for CVA6 specifications
+
+# Document-Specific Fields
+instruction_category: "Integer Register-Immediate"  # Extract from section header: "Integer Register-Immediate Instructions"
+format: "addi rd, rs1, imm[11:0]"              # Extract from "**Format**: addi rd, rs1, imm[11:0]" line
+description: "add sign-extended 12-bit immediate to register rs1, and store the result in register rd"  # Extract from "**Description**:" line  
+pseudocode: "x[rd] = x[rs1] + sext(imm[11:0])" # Extract from "**Pseudocode**: x[rd] = x[rs1] + sext(imm[11:0])" line
+invalid_values: "NONE"                          # Extract from "**Invalid values**: NONE" line
+exceptions: "NONE"                              # Extract from "**Exception raised**: NONE" line
+operands: {                                     # Parse format string to identify operand types
+  "rd": {"type": "destination_register", "description": "destination register"},         # FROM: format "addi rd, ..."
+  "rs1": {"type": "source_register", "description": "source register"},                  # FROM: format "addi rd, rs1, ..."
+  "imm": {"type": "immediate", "width": 12, "encoding": "sign_extended"}                 # FROM: format "..., imm[11:0]"
+}
+
+# Examples of extraction patterns:
+# FROM: "- **ADDI**: Add Immediate"  →  name: "ADDI"
+# FROM: "**Format**: addi rd, rs1, imm[11:0]"  →  format: "addi rd, rs1, imm[11:0]"
+# FROM: "**Pseudocode**: x[rd] = x[rs1] + sext(imm[11:0])"  →  pseudocode: "x[rd] = x[rs1] + sext(imm[11:0])"
+# FROM: "cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst"  →  target_architecture: "RV32"
 ```
 
 ## Document Type 10: SystemVerilog Package Definitions
