@@ -289,7 +289,7 @@ name_type: "specification"                      # Fixed: "specification" for ISA
 target_architecture: "RV32"                     # Extract from filename: "rv32.adoc" → "RV32", or chapter title "RV32I" → "RV32"
 word_size: 32                                   # Extract from text: "32 bits wide" or "XLEN=32" → 32
 category: "specification"                       # Fixed: "specification" for all ISA specification documents
-subcategory: "base_integer"                     # Extract from chapter title using mapping rules (see extraction patterns below)
+subcategory: "base_integer"                     # Extract from document content: main headings, intro text, or instruction mnemonics (see content-based extraction patterns below)
 
 # Content-Specific Fields
 content_type: "specification"                   # Fixed: "specification" for authoritative ISA documents
@@ -313,30 +313,48 @@ instruction_categories: {                       # Extract from subsection headin
 # FROM: "===== Integer Register-Immediate Instructions"  →  instruction_categories: {"integer_register_immediate": [...]}
 # FROM: "riscv-isa-manual/src/unpriv/rv32.adoc"  →  target_architecture: "RV32"
 
-# Subcategory extraction mapping rules:
-# Chapter title patterns → subcategory mappings:
-# "Base Integer Instruction Set" → "base_integer"
-# "Integer Multiplication and Division" → "multiply_divide" 
-# "Atomic Instructions" → "atomic"
-# "Single-Precision Floating-Point" → "float_single"
-# "Double-Precision Floating-Point" → "float_double" 
-# "Compressed Instructions" → "compressed"
-# "Control and Status Register" → "csr"
-# "Machine-Level ISA" → "machine_level"
-# "Supervisor-Level ISA" → "supervisor_level"
-# "Hypervisor Extension" → "hypervisor"
+# Subcategory extraction from document content:
+# Extract from chapter headings, section titles, and document context:
 
-# File path patterns → subcategory mappings:
-# "unpriv/base.adoc" → "base_integer"
-# "unpriv/m-st-ext.adoc" → "multiply_divide"
-# "unpriv/a-st-ext.adoc" → "atomic" 
-# "unpriv/f-st-ext.adoc" → "float_single"
-# "unpriv/d-st-ext.adoc" → "float_double"
-# "unpriv/c-st-ext.adoc" → "compressed"
-# "unpriv/zicsr.adoc" → "csr"
-# "priv/machine.adoc" → "machine_level"
-# "priv/supervisor.adoc" → "supervisor_level"
-# "priv/hypervisor.adoc" → "hypervisor"
+# Content-based patterns → subcategory mappings:
+# Look for main heading patterns:
+# "=== RV32I Base Integer Instruction Set" → "base_integer"  
+# "=== RV64I Base Integer Instruction Set" → "base_integer"
+# "=== Integer Multiplication and Division Extension" → "multiply_divide"
+# "=== Atomic Instructions" → "atomic" 
+# "=== Single-Precision Floating-Point" → "float_single"
+# "=== Double-Precision Floating-Point" → "float_double"
+# "=== Compressed Instructions" → "compressed"
+# "=== Control and Status Register Instructions" → "csr"
+# "=== Machine-Level ISA" → "machine_level"
+# "=== Supervisor-Level ISA" → "supervisor_level" 
+# "=== Hypervisor Extension" → "hypervisor"
+
+# Alternative content patterns if main heading not found:
+# Look for chapter intro text:
+# "This chapter describes the base integer instruction set" → "base_integer"
+# "multiplication and division operations" → "multiply_divide"
+# "atomic memory operations" → "atomic"
+# "single-precision floating-point" → "float_single" 
+# "double-precision floating-point" → "float_double"
+# "16-bit instruction encodings" → "compressed"
+# "control and status register" → "csr"
+# "machine mode" → "machine_level"
+# "supervisor mode" → "supervisor_level"
+# "hypervisor extension" → "hypervisor"
+# "application profile" → "application_profile"
+# "infrastructure profile" → "infrastructure_profile"
+# "debug module" → "debug_specification"
+
+# If no content patterns match, extract from document context:
+# Look for instruction mnemonics in document to infer category:
+# Contains "ADDI", "ADD", "SUB" → "base_integer"
+# Contains "MUL", "DIV", "REM" → "multiply_divide"
+# Contains "LR.W", "SC.W", "AMO" → "atomic"
+# Contains "FLW", "FSW", "FADD.S" → "float_single"
+# Contains "FLD", "FSD", "FADD.D" → "float_double" 
+# Contains "C.ADDI", "C.LW" → "compressed"
+# Contains "CSRRW", "CSRRS" → "csr"
 ```
 
 ## Document Type 4: Test Examples
@@ -877,10 +895,25 @@ specification_context:
 
 ### Source Locations
 ```
-Primary: cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst
-├── cva6/docs/01_cva6_user/RISCV_Instructions_RV32I.rst
-├── cva6/config/gen_from_riscv_config/templates/isa_template.yaml
-└── cva6/config/gen_from_riscv_config/README.md (instruction details)
+Primary instruction specifications:
+├── cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst - Verification-focused instruction definitions
+├── cva6/docs/01_cva6_user/RISCV_Instructions*.rst - User manual instruction documentation
+│   ├── RISCV_Instructions_RV32I.rst - Base integer instructions  
+│   ├── RISCV_Instructions_RV32A.rst - Atomic instructions
+│   ├── RISCV_Instructions_RV32M.rst - Multiply/divide instructions
+│   ├── RISCV_Instructions_RV32C.rst - Compressed instructions
+│   ├── RISCV_Instructions_RVZicsr.rst - CSR instructions
+│   ├── RISCV_Instructions_RVZifencei.rst - Instruction fence
+│   └── RISCV_Instructions_RVZ*.rst - Various Z extensions (Zba, Zbb, Zbc, Zbs, etc.)
+
+Architecture documentation:
+├── cva6/docs/design/design-manual/source/architecture.adoc - Overall CVA6 architecture
+├── cva6/docs/design/design-manual/source/instructions.adoc - Instruction implementation overview
+└── cva6/config/gen_from_riscv_config/cv32a65x/isa/isa.adoc - ISA configuration specifics
+
+Configuration templates:
+├── cva6/config/gen_from_riscv_config/templates/isa_template.yaml - Instruction template definitions
+└── cva6/config/gen_from_riscv_config/README.md - Configuration and instruction generation details
 ```
 
 ### Document Structure Example
