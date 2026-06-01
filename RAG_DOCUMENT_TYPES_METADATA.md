@@ -40,7 +40,8 @@ item_priority: "mandatory"  # infer from plan structure
 
 ### Source Locations
 ```
-Primary: cva6/verif/docs/VerifPlans/source/*.md
+Primary verification plans (Markdown):
+cva6/verif/docs/VerifPlans/source/*.md
 ├── dvplan_ISA_RV32.md (296KB) - RV32 instruction verification
 ├── dvplan_AXI.md (18KB) - AXI interface verification  
 ├── dvplan_MMU_SV32.md (28KB) - MMU verification
@@ -49,6 +50,7 @@ Primary: cva6/verif/docs/VerifPlans/source/*.md
 ├── dvplan_FENCEI.md (20KB) - FENCE.I instruction verification
 ├── dvplan_FRONTEND.md (11KB) - Frontend verification
 └── dvplan_traps.md (23KB) - Exception/trap verification
+
 ```
 
 ### Document Structure Example
@@ -66,6 +68,7 @@ Primary: cva6/verif/docs/VerifPlans/source/*.md
 * **Unique verification tag:** VP_ISA_RV32_F000_S000_I000
 * **Link to Coverage:** isacov.rv32i_addi_cg.cp_rs1
 ```
+
 
 ### Metadata Structure
 ```yaml
@@ -94,9 +97,11 @@ coverage_links: ["isacov.rv32i_addi_cg.cp_rs1", "isacov.rv32i_addi_cg.cp_rd"]  #
 requirement_location: "./RISCV_Instructions.rst" # Extract from "* **Requirement location:**" line content
 
 # Examples of extraction patterns:
+# MARKDOWN FILES:
 # FROM: "### Sub-feature: 000_ADDI"  →  sub_feature: "ADDI"  
 # FROM: "* **Test Type:** Constrained Random"  →  content_type: "constrained_random"
 # FROM: "* **Applicable Cores:** CV32A6_v0.1.0, CV32A6-step2"  →  target_cores: ["CV32A6_v0.1.0", "CV32A6-step2"]
+
 ```
 
 ## Document Type 2: Design Implementation
@@ -1124,4 +1129,123 @@ cross_reference_metadata:
   links_to_instruction_specs: "Document Type 9" # Cross-ref to instruction behavior
   used_by_design_modules: ["decoder.sv", "compressed_decoder.sv"] # Design usage
   referenced_by_verification: "Verification plans use these opcodes"
+```
+## Document Type 11: CSR Specifications (YAML)
+
+### Purpose
+**What:** Detailed Control and Status Register (CSR) field definitions with exact bit layouts, access permissions, and reset values  
+**Why:** Provides agents with precise hardware implementation details needed for generating accurate CSR access tests
+**When Used:** When agents need exact CSR field specifications, bit positions, access types, and reset behavior for test generation
+
+### RAG Agent Data Extraction
+**What RAG agents should send to main test writing agents:**
+
+```yaml
+# Precise CSR Definition (MUST SEND)
+csr_specification:
+  csr_name: "CSR_MSTATUS"
+  csr_address: 0x300
+  privilege_mode: "M"  # Machine, Supervisor, User
+  description: "Machine Status Register"
+
+# Field-Level Details (MUST SEND)
+field_definitions:
+  - field_name: "SD"
+    bit_range: [31, 31]  # msb, lsb
+    access_type: "R"     # R, RW, RO, WO
+    reset_value: 0
+    description: "SD bit indicates floating-point state"
+  - field_name: "TSR"  
+    bit_range: [22, 22]
+    access_type: "RW"
+    reset_value: 0
+    description: "Trap SRET: supports intercepting supervisor exception return"
+
+# Access Patterns (SHOULD SEND)
+csr_behavior:
+  read_side_effects: "none"  # or specific side effects
+  write_constraints: ["tsr_requires_m_mode", "some_fields_readonly"]
+  reset_behavior: "all_fields_to_specified_values"
+  exception_conditions: ["illegal_access_from_u_mode"]
+
+# Integration Context (HELPFUL TO SEND)
+usage_context:
+  related_csrs: ["MTVEC", "MCAUSE", "MEPC"]  # CSRs used together
+  verification_priority: "high"  # based on complexity
+  test_complexity: "medium"      # field interdependencies
+```
+
+**Agent Decision Support:** This data enables agents to generate CSR tests with exact bit manipulations, correct access patterns, and proper exception handling.
+
+### Source Locations
+```
+Primary CSR specifications:
+cva6/verif/tests/custom/CSR/csr_access_yaml/*.yaml
+├── cv32a6_m_ro_csr_test.yaml - Machine-mode read-only CSR definitions
+├── cv32a6_m_rw_csr_test.yaml - Machine-mode read-write CSR definitions  
+├── cv32a6_s_rw_csr_test.yaml - Supervisor-mode read-write CSR definitions
+└── cva6_mscratch_csr_access.yaml - Specific CSR (MSCRATCH) access patterns
+
+Secondary verification configurations:
+├── cva6/verif/sim/cva6_base_testlist.yaml - Base test configurations
+├── cva6/verif/sim/cva6.yaml - Simulator tool configurations  
+└── cva6/verif/env/corev-dv/simulator.yaml - Environment setup
+```
+
+### Document Structure Example
+```yaml
+- csr: CSR_MSTATUS
+  description: >
+    Machine Status Register
+  address: 0x300
+  privilege_mode: M
+  rv32:
+    - field_name: SD
+      description: >
+       SD bit indicates whether floating-point state is dirty
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: TSR
+      description: >
+       Trap SRET: supports intercepting supervisor exception return instruction
+      type: RW
+      reset_val: 0
+      msb: 22
+      lsb: 22
+```
+
+### Metadata Structure
+```yaml
+# Universal Fields (harmonized schema)
+document_type: "csr_specification"               # Fixed value for this document type
+file_path: "cva6/verif/tests/custom/CSR/csr_access_yaml/cv32a6_m_rw_csr_test.yaml"  # Full repository path
+name: "CSR_MSTATUS"                              # Extract from CSR entry: "- csr: CSR_MSTATUS" → "CSR_MSTATUS"
+name_type: "csr"                                 # Fixed: "csr" for CSR specification files
+target_architecture: "RV32"                     # Extract from section: "rv32:" → "RV32", "rv64:" → "RV64"  
+word_size: 32                                    # Derive from target_architecture: RV32 → 32, RV64 → 64
+category: "specification"                        # Fixed: "specification" for CSR definition files
+subcategory: "csr_definition"                    # Fixed: "csr_definition" for CSR field specifications
+
+# Content-Specific Fields
+privilege_level: "machine"                       # Extract from "privilege_mode: M" → "machine", "S" → "supervisor", "U" → "user"
+content_type: "specification"                    # Fixed: "specification" for authoritative CSR definitions
+source_type: "project_internal"                  # Fixed: "project_internal" for CVA6 CSR specifications
+
+# Document-Specific Fields
+csr_address: 0x300                               # Extract from "address: 0x300" → 0x300
+field_definitions: [                             # Extract from rv32/rv64 section field definitions  
+  {"name": "SD", "bits": [31,31], "type": "R", "reset": 0},     # FROM: field_name: SD, msb: 31, lsb: 31, type: R, reset_val: 0
+  {"name": "TSR", "bits": [22,22], "type": "RW", "reset": 0}    # FROM: field_name: TSR, msb: 22, lsb: 22, type: RW, reset_val: 0
+]
+access_constraints: ["machine_mode_only"]        # Infer from privilege_mode and field types
+reset_behavior: "defined_values"                 # Extract from presence of reset_val fields
+
+# Examples of extraction patterns:
+# FROM: "- csr: CSR_MSTATUS"  →  name: "CSR_MSTATUS"
+# FROM: "privilege_mode: M"  →  privilege_level: "machine"  
+# FROM: "address: 0x300"  →  csr_address: 0x300
+# FROM: "field_name: TSR\n  type: RW\n  reset_val: 0\n  msb: 22\n  lsb: 22"  →  field_definitions entry
+# FROM: "cv32a6_m_rw_csr_test.yaml"  →  target_architecture: "RV32" (cv32 prefix)
 ```
