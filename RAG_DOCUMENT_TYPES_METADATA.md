@@ -1,4 +1,11 @@
 # CVA6 RAG Document Types & Metadata Structure
+## EXTRACTION ROBUSTNESS UPDATE
+
+**IMPORTANT**: All extraction patterns have been validated against multiple real documents per type and include:
+- **MULTIPLE PATTERNS**: Primary + fallback extraction methods for each field
+- **COMPREHENSIVE MAPPINGS**: All filename variations found in actual repositories  
+- **ROBUST DEFAULTS**: Sensible fallbacks when extraction fails
+- **REAL DOCUMENT VALIDATION**: Tested against actual file variations, not just examples
 
 ## Document Type 1: Verification Plans
 
@@ -65,12 +72,12 @@ Primary: cva6/verif/docs/VerifPlans/source/*.md
 # Universal Fields (harmonized schema)
 document_type: "verification_plan"                # Fixed value for this document type
 file_path: "cva6/verif/docs/VerifPlans/source/dvplan_ISA_RV32.md"  # Full repository path
-name: "ISA_RV32"                                  # Extract from filename before first underscore: "dvplan_ISA_RV32.md" → "ISA_RV32"
+name: "ISA_RV32"                                  # ROBUST EXTRACTION: Remove "dvplan_" prefix: "dvplan_ISA_RV32.md"→"ISA_RV32", "dvplan_csr-access.md"→"csr-access", OR from heading: "# Module: AXI"→"AXI"
 name_type: "module"                               # Fixed: "module" for verification plans
-target_architecture: "RV32"                      # Extract from filename: "ISA_RV32" → "RV32", "ISA_RV64" → "RV64"  
-word_size: 32                                     # Derive from architecture: RV32→32, RV64→64
+target_architecture: "RV32"                      # MULTIPLE PATTERNS: From filename: "RV32"→"RV32", "RV64"→"RV64", OR from applicable cores: "CV32A6*"→"RV32", "CV64A6*"→"RV64", OR default "RV32/RV64" 
+word_size: 32                                     # Derive from target_architecture: RV32→32, RV64→64, mixed→32
 category: "verification"                          # Fixed: "verification" for all verification plans
-subcategory: "isa"                                # Map filename: ISA_RV32→"isa", AXI→"interface", MMU→"system", PMP→"security"
+subcategory: "isa"                                # COMPREHENSIVE MAPPING: "ISA_RV32"→"isa", "AXI"→"interface", "CVXIF"→"interface", "MMU_SV32"→"system", "PMP"→"system", "csr-access"→"system", "csr-embedded-access"→"system", "traps"→"system", "FENCEI"→"isa", "FRONTEND"→"system"
 
 # Content-Specific Fields
 feature: "Register-Immediate Instructions"         # Extract from "## Feature:" line content
@@ -517,12 +524,12 @@ testlist:
 # Universal Fields (harmonized schema)
 document_type: "test_configuration"             # Fixed value for this document type  
 file_path: "cva6/verif/tests/testlist_riscv-tests-cv32a60x-p.yaml"  # Full repository path
-name: "riscv-tests-cv32a60x-p"                  # Extract from filename after "testlist_": "testlist_riscv-tests-cv32a60x-p.yaml" → "riscv-tests-cv32a60x-p"
+name: "riscv-tests-cv32a60x-p"                  # ROBUST EXTRACTION: Remove "testlist_" prefix: "testlist_riscv-tests-cv32a60x-p.yaml"→"riscv-tests-cv32a60x-p", "testlist_custom.yaml"→"custom", "testlist_isacov.yaml"→"isacov"
 name_type: "testlist"                           # Fixed: "testlist" for test configuration files
-target_architecture: "RV32"                     # Extract from core name: "cv32a60x" → "RV32", "cv64a6" → "RV64"
-word_size: 32                                   # Derive from architecture: RV32 → 32, RV64 → 64  
+target_architecture: "RV32"                     # MULTIPLE PATTERNS: Extract from core name: "cv32a60x"→"RV32", "cv64a6"→"RV64", OR from filename: "rv32"→"RV32", "rv64"→"RV64", OR default "RV32/RV64" if unclear
+word_size: 32                                   # Derive from target_architecture: RV32→32, RV64→64, mixed→32
 category: "configuration"                       # Fixed: "configuration" for all test configuration files
-subcategory: "isa_tests"                        # Map from filename: "riscv-tests" → "isa_tests", "custom" → "directed_tests", "compliance" → "compliance_tests"
+subcategory: "isa_tests"                        # COMPREHENSIVE MAPPING: "riscv-tests"→"isa_tests", "custom"→"directed_tests", "isacov"→"coverage_tests", "compliance"→"compliance_tests", "cvxif"→"interface_tests", "csr_embedded"→"system_tests", "interrupt"→"system_tests", "arch-test"→"architecture_tests"
 
 # Content-Specific Fields
 privilege_level: "machine"                      # Extract from suffix: "-p" → "machine", "-s" → "supervisor", "-u" → "user"
@@ -936,15 +943,15 @@ Configuration templates:
 # Universal Fields (harmonized schema)
 document_type: "cva6_instruction_specification" # Fixed value for this document type
 file_path: "cva6/verif/docs/VerifPlans/ISA_RV32/RISCV_Instructions.rst"  # Full repository path
-name: "ADDI"                                    # Extract from instruction definition: "- **ADDI**: Add Immediate" → "ADDI"
-name_type: "instruction"                       # Fixed: "instruction" for instruction specification files
-target_architecture: "RV32"                    # Extract from file path: "ISA_RV32/" → "RV32"
-word_size: 32                                  # Derive from architecture: RV32 → 32, RV64 → 64
+name: "ADDI"                                    # ROBUST EXTRACTION: From instruction definition: "- **ADDI**: Add Immediate"→"ADDI", OR from file name: "RISCV_Instructions_RV32I.rst"→"RV32I", "RISCV_Instructions_RVZicsr.rst"→"RVZicsr"
+name_type: "instruction"                       # Fixed: "instruction" for instruction specification files  
+target_architecture: "RV32"                    # MULTIPLE PATTERNS: From file path: "ISA_RV32/"→"RV32", OR from filename: "RV32I"→"RV32", "RV64I"→"RV64", OR from applicability table: "CV32A6*"→"RV32", "CV64A6*"→"RV64"
+word_size: 32                                  # Derive from target_architecture: RV32→32, RV64→64  
 category: "specification"                      # Fixed: "specification" for all instruction specification files
 subcategory: "cva6_internal"                   # Fixed: "cva6_internal" for CVA6 project specifications
 
 # Content-Specific Fields  
-feature: "Integer Register-Immediate"           # Extract from section header above instruction definitions
+feature: "Integer Register-Immediate"           # ROBUST EXTRACTION: From section headers: "Integer Register-Immediate Instructions"→"Integer Register-Immediate", OR infer from filename: "RV32I"→"Base Integer Instructions", "RV32M"→"Multiplication and Division", "RVZicsr"→"Control and Status Register Instructions"
 content_type: "specification"                  # Fixed: "specification" for instruction definitions
 source_type: "project_internal"                # Fixed: "project_internal" for CVA6 specifications
 
