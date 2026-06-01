@@ -1130,125 +1130,118 @@ cross_reference_metadata:
   used_by_design_modules: ["decoder.sv", "compressed_decoder.sv"] # Design usage
   referenced_by_verification: "Verification plans use these opcodes"
 ```
-## Document Type 11: CSR Specifications (YAML)
+## Document Type 11: Verification Plan Features (YAML)
 
 ### Purpose
-**What:** Detailed Control and Status Register (CSR) field definitions with exact bit layouts, access permissions, and reset values  
-**Why:** Provides agents with precise hardware implementation details needed for generating accurate CSR access tests
-**When Used:** When agents need exact CSR field specifications, bit positions, access types, and reset behavior for test generation
+**What:** Structured verification plan features with detailed verification goals, test approaches, and coverage requirements in YAML format
+**Why:** Provides agents with machine-readable verification requirements that complement the prose markdown verification plans  
+**When Used:** When agents need structured access to verification goals, test types, coverage methods, and requirement references
 
 ### RAG Agent Data Extraction
 **What RAG agents should send to main test writing agents:**
 
 ```yaml
-# Precise CSR Definition (MUST SEND)
-csr_specification:
-  csr_name: "CSR_MSTATUS"
-  csr_address: 0x300
-  privilege_mode: "M"  # Machine, Supervisor, User
-  description: "Machine Status Register"
+# Structured Verification Requirements (MUST SEND)
+verification_specification:
+  feature_name: "PMP granularity" 
+  verification_tag: "VP_PMP_F001_S000_I000"
+  verification_goals: "determine the PMP granularity 2^(G+2) bytes by writing zero to pmp(0)cfg"
+  description: "Software may determine the PMP granularity by writing zero to pmp0cfg, then writing all ones to pmpaddr0"
 
-# Field-Level Details (MUST SEND)
-field_definitions:
-  - field_name: "SD"
-    bit_range: [31, 31]  # msb, lsb
-    access_type: "R"     # R, RW, RO, WO
-    reset_value: 0
-    description: "SD bit indicates floating-point state"
-  - field_name: "TSR"  
-    bit_range: [22, 22]
-    access_type: "RW"
-    reset_value: 0
-    description: "Trap SRET: supports intercepting supervisor exception return"
+# Test Configuration (MUST SEND)
+test_specification:
+  test_type: 2  # Mapped to test approach (directed, random, etc.)
+  coverage_method: 0  # Mapped to coverage approach (functional, assertion, etc.)
+  pass_fail_criteria: 11  # Numeric code for success criteria
+  applicable_cores: -1  # Core compatibility specification
 
-# Access Patterns (SHOULD SEND)
-csr_behavior:
-  read_side_effects: "none"  # or specific side effects
-  write_constraints: ["tsr_requires_m_mode", "some_fields_readonly"]
-  reset_behavior: "all_fields_to_specified_values"
-  exception_conditions: ["illegal_access_from_u_mode"]
+# Documentation References (SHOULD SEND)
+requirement_references:
+  reference_document: "RISC-V Privileged Architectures V20211203"
+  reference_page: "59"  
+  requirement_section: "PMP granularity determination"
+  verification_goals: "determine the PMP granularity 2^(G+2) bytes"
 
-# Integration Context (HELPFUL TO SEND)
-usage_context:
-  related_csrs: ["MTVEC", "MCAUSE", "MEPC"]  # CSRs used together
-  verification_priority: "high"  # based on complexity
-  test_complexity: "medium"      # field interdependencies
+# Hierarchical Context (HELPFUL TO SEND)  
+feature_hierarchy:
+  feature_id: 1
+  subfeature_name: "000_granularity_check"
+  item_id: "000"
+  display_order: 1
 
 ```
 
-**Agent Decision Support:** This data enables agents to generate CSR tests with exact bit manipulations, correct access patterns, and proper exception handling.
+**Agent Decision Support:** This data provides structured, machine-readable verification requirements that agents can parse programmatically to understand test objectives, approaches, and success criteria.
 
 ### Source Locations
 ```
-Primary CSR specifications:
-cva6/verif/tests/custom/CSR/csr_access_yaml/*.yaml
-├── cv32a6_m_ro_csr_test.yaml - Machine-mode read-only CSR definitions
-├── cv32a6_m_rw_csr_test.yaml - Machine-mode read-write CSR definitions  
-├── cv32a6_s_rw_csr_test.yaml - Supervisor-mode read-write CSR definitions
-└── cva6_mscratch_csr_access.yaml - Specific CSR (MSCRATCH) access patterns
+Primary structured verification features:
+cva6/verif/docs/VerifPlans/*/*.yml
+├── PMP/VP_IP001.yml - PMP granularity verification feature
+├── PMP/VP_IP002.yml - Other PMP verification features
+└── [other verification modules]/*.yml - Additional structured verification features
 
-Secondary verification configurations:
-├── cva6/verif/sim/cva6_base_testlist.yaml - Base test configurations
-├── cva6/verif/sim/cva6.yaml - Simulator tool configurations  
-└── cva6/verif/env/corev-dv/simulator.yaml - Environment setup
+Note: These YAML files contain the same verification requirements as the 
+markdown files but in structured, machine-readable format.
 ```
 
 ### Document Structure Example
 ```yaml
-- csr: CSR_MSTATUS
-  description: >
-    Machine Status Register
-  address: 0x300
-  privilege_mode: M
-  rv32:
-    - field_name: SD
-      description: >
-       SD bit indicates whether floating-point state is dirty
-      type: R
-      reset_val: 0
-      msb: 31
-      lsb: 31
-    - field_name: TSR
-      description: >
-       Trap SRET: supports intercepting supervisor exception return instruction
-      type: RW
-      reset_val: 0
-      msb: 22
-      lsb: 22
+!Feature
+next_elt_id: 1
+name: PMP granularity
+id: 1
+display_order: 1
+subfeatures: !!omap
+- 000_granularity_check: !Subfeature
+    name: 000_granularity_check
+    tag: VP_PMP_F001_S000
+    next_elt_id: 1
+    display_order: 0
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_PMP_F001_S000_I000
+        description: "Software may determine the PMP granularity by writing zero to pmp0cfg, then writing all ones to pmpaddr0"
+        verif_goals: determine the PMP granularity 2^(G+2) bytes
+        pfc: 11
+        test_type: 2
+        cov_method: 0
+        ref_page: '59'
 ```
 
 ### Metadata Structure
 ```yaml
 # Universal Fields (harmonized schema)
-document_type: "csr_specification"               # Fixed value for this document type
-file_path: "cva6/verif/tests/custom/CSR/csr_access_yaml/cv32a6_m_rw_csr_test.yaml"  # Full repository path
-name: "CSR_MSTATUS"                              # Extract from CSR entry: "- csr: CSR_MSTATUS" → "CSR_MSTATUS"
-name_type: "csr"                                 # Fixed: "csr" for CSR specification files
-target_architecture: "RV32"                     # Extract from section: "rv32:" → "RV32", "rv64:" → "RV64"  
+document_type: "verification_plan_feature"       # Fixed value for this document type
+file_path: "cva6/verif/docs/VerifPlans/PMP/VP_IP001.yml"  # Full repository path
+name: "PMP granularity"                          # Extract from "name: PMP granularity" → "PMP granularity"
+name_type: "feature"                             # Fixed: "feature" for verification plan feature files
+target_architecture: "RV32"                     # Infer from file location or feature scope  
 word_size: 32                                    # Derive from target_architecture: RV32 → 32, RV64 → 64
-category: "specification"                        # Fixed: "specification" for CSR definition files
-subcategory: "csr_definition"                    # Fixed: "csr_definition" for CSR field specifications
+category: "verification"                         # Fixed: "verification" for verification plan features
+subcategory: "structured_plan"                   # Fixed: "structured_plan" for YAML verification features
 
 # Content-Specific Fields
-privilege_level: "machine"                       # Extract from "privilege_mode: M" → "machine", "S" → "supervisor", "U" → "user"
-content_type: "specification"                    # Fixed: "specification" for authoritative CSR definitions
-source_type: "project_internal"                  # Fixed: "project_internal" for CVA6 CSR specifications
+content_type: "structured_requirement"           # Fixed: "structured_requirement" for YAML verification features
+source_type: "project_internal"                  # Fixed: "project_internal" for CVA6 verification plans
 
 # Document-Specific Fields  
-verification_tag: "VP_PMP_F001_S000_I000"       # Extract from "tag: VP_PMP_F001_S000_I000" → "VP_PMP_F001_S000_I000" 
-csr_address: 0x300                               # Extract from "address: 0x300" → 0x300
-field_definitions: [                             # Extract from rv32/rv64 section field definitions  
-  {"name": "SD", "bits": [31,31], "type": "R", "reset": 0},     # FROM: field_name: SD, msb: 31, lsb: 31, type: R, reset_val: 0
-  {"name": "TSR", "bits": [22,22], "type": "RW", "reset": 0}    # FROM: field_name: TSR, msb: 22, lsb: 22, type: RW, reset_val: 0
-]
-access_constraints: ["machine_mode_only"]        # Infer from privilege_mode and field types
-reset_behavior: "defined_values"                 # Extract from presence of reset_val fields
+verification_tag: "VP_PMP_F001_S000_I000"       # Extract from "tag: VP_PMP_F001_S000_I000" → "VP_PMP_F001_S000_I000"
+feature_id: 1                                    # Extract from "id: 1" → 1
+verification_goals: "determine the PMP granularity 2^(G+2) bytes by writing zero to pmp(0)cfg"  # Extract from "verif_goals:" field
+test_type: 2                                     # Extract from "test_type: 2" → 2
+coverage_method: 0                               # Extract from "cov_method: 0" → 0  
+pass_fail_criteria: 11                           # Extract from "pfc: 11" → 11
+reference_document: "RISC-V Privileged Architectures V20211203"  # Extract from description field references
+reference_page: "59"                             # Extract from "ref_page: '59'" → "59"
 
 # Examples of extraction patterns:
 # FROM: "tag: VP_PMP_F001_S000_I000"  →  verification_tag: "VP_PMP_F001_S000_I000"
-# FROM: "- csr: CSR_MSTATUS"  →  name: "CSR_MSTATUS" 
-# FROM: "privilege_mode: M"  →  privilege_level: "machine"  
-# FROM: "address: 0x300"  →  csr_address: 0x300
-# FROM: "field_name: TSR\n  type: RW\n  reset_val: 0\n  msb: 22\n  lsb: 22"  →  field_definitions entry
-# FROM: "cv32a6_m_rw_csr_test.yaml"  →  target_architecture: "RV32" (cv32 prefix)
+# FROM: "name: PMP granularity"  →  name: "PMP granularity"
+# FROM: "id: 1"  →  feature_id: 1
+# FROM: "verif_goals: determine the PMP granularity 2^(G+2) bytes"  →  verification_goals: "determine the PMP granularity..."
+# FROM: "test_type: 2"  →  test_type: 2
+# FROM: "pfc: 11"  →  pass_fail_criteria: 11
+# FROM: "ref_page: '59'"  →  reference_page: "59"
 ```
