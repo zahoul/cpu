@@ -1173,6 +1173,7 @@ usage_context:
   related_csrs: ["MTVEC", "MCAUSE", "MEPC"]  # CSRs used together
   verification_priority: "high"  # based on complexity
   test_complexity: "medium"      # field interdependencies
+
 ```
 
 **Agent Decision Support:** This data enables agents to generate CSR tests with exact bit manipulations, correct access patterns, and proper exception handling.
@@ -1233,7 +1234,8 @@ privilege_level: "machine"                       # Extract from "privilege_mode:
 content_type: "specification"                    # Fixed: "specification" for authoritative CSR definitions
 source_type: "project_internal"                  # Fixed: "project_internal" for CVA6 CSR specifications
 
-# Document-Specific Fields
+# Document-Specific Fields  
+verification_tag: "VP_PMP_F001_S000_I000"       # Extract from "tag: VP_PMP_F001_S000_I000" → "VP_PMP_F001_S000_I000" 
 csr_address: 0x300                               # Extract from "address: 0x300" → 0x300
 field_definitions: [                             # Extract from rv32/rv64 section field definitions  
   {"name": "SD", "bits": [31,31], "type": "R", "reset": 0},     # FROM: field_name: SD, msb: 31, lsb: 31, type: R, reset_val: 0
@@ -1243,7 +1245,8 @@ access_constraints: ["machine_mode_only"]        # Infer from privilege_mode and
 reset_behavior: "defined_values"                 # Extract from presence of reset_val fields
 
 # Examples of extraction patterns:
-# FROM: "- csr: CSR_MSTATUS"  →  name: "CSR_MSTATUS"
+# FROM: "tag: VP_PMP_F001_S000_I000"  →  verification_tag: "VP_PMP_F001_S000_I000"
+# FROM: "- csr: CSR_MSTATUS"  →  name: "CSR_MSTATUS" 
 # FROM: "privilege_mode: M"  →  privilege_level: "machine"  
 # FROM: "address: 0x300"  →  csr_address: 0x300
 # FROM: "field_name: TSR\n  type: RW\n  reset_val: 0\n  msb: 22\n  lsb: 22"  →  field_definitions entry
